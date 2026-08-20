@@ -7,6 +7,7 @@ import { organizationSchema, websiteSchema, personSchema } from "@/lib/siteConfi
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import FloatingActions from "@/components/FloatingActions";
+import JenyChat from "@/components/JenyChat";
 import ScrollProgress from "@/components/ScrollProgress";
 import Home from "@/pages/Home";
 import About from "@/pages/About";
@@ -61,6 +62,7 @@ function Site() {
       </main>
       <Footer />
       <FloatingActions />
+      <JenyChat />
     </div>
   );
 }

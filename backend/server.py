@@ -1077,6 +1077,169 @@ async def geo(request: Request):
     return await asyncio.to_thread(fetch, ip)
 
 
+# ---------------- Jeny AI chat assistant ----------------
+from fastapi.responses import StreamingResponse
+
+PHONE_RE = re.compile(r"(\+?\d[\d\s\-\(\)\.]{7,16}\d)")
+
+def _jeny_system(phone_captured: bool, phone: str, transcript: str, page: str) -> str:
+    services = "\n".join(f"- {s['name']} ({s['short']})" for s in SERVICES)
+    base = f"""You are Jeny, the friendly AI assistant on Rajeev's freelance portfolio website (rajeevfreelancer.com).
+Always reply in English only. Keep answers short, warm and helpful: 1-4 sentences, no long lists unless asked.
+Wrap the most important words in **double asterisks** so they stand out — always bold **WhatsApp number**, **phone number**, **free consultation**, and service names when you mention them.
+
+About Rajeev:
+- Senior freelance engineer & digital-growth consultant, 12+ years experience (ex-IOG, Accenture, Google).
+- Based in Gurgaon, Delhi NCR, India; works remotely with clients in 40+ countries.
+- Communication is WhatsApp-fast: +91 97116 23561. Email: hello@rajeevfreelancer.com.
+- Free consultation for every new project; pricing is custom per scope (never invent exact prices — say pricing depends on scope and Rajeev shares a fixed-scope quote after a free consultation).
+
+Services Rajeev offers:
+{services}
+
+Your goals:
+1. Answer the visitor's questions about Rajeev's services, experience, process, and how to get started.
+2. Politely collect the visitor's phone/WhatsApp number so Rajeev can follow up personally.
+3. Never make up facts, case-study numbers or prices. If unsure, offer the free consultation.
+
+The visitor is currently on the page: {page or '/'}."""
+    if phone_captured:
+        base += f"\n\nThe visitor has ALREADY shared their phone number ({phone}). Do NOT ask for it again. If they just shared it, thank them once and tell them Rajeev will reach out on WhatsApp shortly."
+    else:
+        base += "\n\nYou do NOT yet have the visitor's phone number. After helpfully answering their question, politely ask for their phone/WhatsApp number (e.g. 'By the way, may I have your WhatsApp number so Rajeev can personally follow up?'). Ask naturally, never pushy, and don't repeat the ask in every single message."
+    if transcript:
+        base += f"\n\nConversation so far:\n{transcript}"
+    return base
+
+
+class ChatInput(BaseModel):
+    session_id: str
+    message: str
+    page: Optional[str] = ""
+
+
+async def _chat_lead(sid: str, phone: str, last_msg: str):
+    try:
+        doc = Lead(name="Website chat visitor (Jeny)", email="", phone=phone,
+                   service="Jeny chat lead", message=f"Phone captured by Jeny AI chat. Last message: {last_msg[:300]}",
+                   source_path="/jeny-chat").model_dump()
+        await db.leads.insert_one({**doc})
+        await db.chat_sessions.update_one({"session_id": sid}, {"$set": {"lead_created": True}})
+        asyncio.create_task(notify_new_lead(doc))
+        logger.info(f"Jeny captured a lead: {phone} (session {sid})")
+    except Exception as e:
+        logger.warning(f"jeny lead create failed: {e}")
+
+
+@api_router.post("/chat")
+async def jeny_chat(payload: ChatInput):
+    msg = (payload.message or "").strip()[:2000]
+    sid = (payload.session_id or "").strip()[:64]
+    if not msg or not sid:
+        raise HTTPException(status_code=422, detail="session_id and message are required")
+    now = datetime.now(timezone.utc).isoformat()
+    session = await db.chat_sessions.find_one({"session_id": sid}, {"_id": 0})
+    if not session:
+        session = {"session_id": sid, "created_at": now, "updated_at": now, "page": payload.page or "",
+                   "phone": "", "phone_captured": False, "lead_created": False, "messages": []}
+        await db.chat_sessions.insert_one({**session})
+    phone_captured = bool(session.get("phone_captured"))
+    phone = session.get("phone", "")
+    m = PHONE_RE.search(msg)
+    if m and not phone_captured:
+        digits = re.sub(r"\D", "", m.group(1))
+        if 8 <= len(digits) <= 15:
+            phone = ("+" + digits) if m.group(1).strip().startswith("+") else digits
+            phone_captured = True
+    updates = {"updated_at": now}
+    if payload.page:
+        updates["page"] = payload.page
+    if phone_captured and not session.get("phone_captured"):
+        updates.update(phone=phone, phone_captured=True)
+    await db.chat_sessions.update_one(
+        {"session_id": sid},
+        {"$set": updates, "$push": {"messages": {"role": "user", "text": msg, "ts": now}}},
+    )
+    if phone_captured and not session.get("lead_created") and not session.get("phone_captured"):
+        asyncio.create_task(_chat_lead(sid, phone, msg))
+
+    history = session.get("messages", [])[-12:]
+    transcript = "\n".join(f"{'Visitor' if h['role'] == 'user' else 'Jeny'}: {h['text']}" for h in history)
+    system = _jeny_system(phone_captured, phone, transcript, payload.page or session.get("page", ""))
+
+    async def gen():
+        full = []
+        try:
+            from emergentintegrations.llm.chat import LlmChat, UserMessage, TextDelta, StreamDone
+
+            chat = LlmChat(api_key=os.environ["EMERGENT_LLM_KEY"], session_id=f"jeny-{sid}-{uuid.uuid4().hex[:8]}",
+                           system_message=system).with_model("gemini", "gemini-3-flash-preview")
+            async with _llm_gate:
+                async for ev in chat.stream_message(UserMessage(text=msg)):
+                    if isinstance(ev, TextDelta):
+                        full.append(ev.content)
+                        yield f"data: {json.dumps({'delta': ev.content})}\n\n"
+                    elif isinstance(ev, StreamDone):
+                        break
+        except Exception as e:
+            logger.warning(f"jeny chat failed: {e}")
+            fb = ("I'm having a little trouble connecting right now. You can reach Rajeev directly on WhatsApp at "
+                  "+91 97116 23561 — or share your number here and he'll get back to you shortly.")
+            full = [fb]
+            yield f"data: {json.dumps({'delta': fb})}\n\n"
+        reply = "".join(full).strip()
+        ts = datetime.now(timezone.utc).isoformat()
+        await db.chat_sessions.update_one(
+            {"session_id": sid},
+            {"$set": {"updated_at": ts}, "$push": {"messages": {"role": "assistant", "text": reply, "ts": ts}}},
+        )
+        yield f"data: {json.dumps({'done': True, 'phone_captured': phone_captured})}\n\n"
+
+    return StreamingResponse(gen(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@api_router.get("/chat/history/{session_id}")
+async def chat_history(session_id: str):
+    s = await db.chat_sessions.find_one({"session_id": session_id[:64]}, {"_id": 0, "messages": 1, "phone_captured": 1})
+    if not s:
+        return {"messages": [], "phone_captured": False}
+    return {"messages": s.get("messages", []), "phone_captured": bool(s.get("phone_captured"))}
+
+
+@api_router.get("/admin/chats")
+async def admin_list_chats(admin: dict = Depends(get_current_admin), limit: int = 100):
+    limit = max(1, min(limit, 300))
+    sessions = await db.chat_sessions.find({}, {"_id": 0}).sort("updated_at", -1).to_list(limit)
+    out = []
+    for s in sessions:
+        msgs = s.get("messages", [])
+        out.append({
+            "session_id": s["session_id"], "created_at": s.get("created_at"), "updated_at": s.get("updated_at"),
+            "page": s.get("page", ""), "phone": s.get("phone", ""), "phone_captured": bool(s.get("phone_captured")),
+            "lead_created": bool(s.get("lead_created")), "message_count": len(msgs),
+            "last_message": (msgs[-1]["text"][:140] if msgs else ""),
+        })
+    total = await db.chat_sessions.count_documents({})
+    return {"sessions": out, "total": total}
+
+
+@api_router.get("/admin/chats/{session_id}")
+async def admin_get_chat(session_id: str, admin: dict = Depends(get_current_admin)):
+    s = await db.chat_sessions.find_one({"session_id": session_id}, {"_id": 0})
+    if not s:
+        raise HTTPException(status_code=404, detail="Chat session not found")
+    return s
+
+
+@api_router.delete("/admin/chats/{session_id}")
+async def admin_delete_chat(session_id: str, admin: dict = Depends(get_current_admin)):
+    res = await db.chat_sessions.delete_one({"session_id": session_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Chat session not found")
+    return {"ok": True}
+
+
 app.include_router(api_router)
 
 app.add_middleware(

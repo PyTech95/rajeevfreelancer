@@ -9,6 +9,7 @@ import SeoTools from "@/pages/admin/SeoTools";
 import BlogManager from "@/pages/admin/BlogManager";
 import CaseStudyManager from "@/pages/admin/CaseStudyManager";
 import LeadMap from "@/pages/admin/LeadMap";
+import ChatManager from "@/pages/admin/ChatManager";
 
 const STATUS = ["new", "contacted", "won", "lost"];
 const STATUS_COLOR = { new: "bg-brand/10 text-brand", contacted: "bg-amber-100 text-amber-700", won: "bg-green-100 text-green-700", lost: "bg-red-100 text-red-600" };
@@ -233,6 +234,7 @@ function Dashboard() {
         <SeoTools />
         <BlogManager />
         <CaseStudyManager />
+        <ChatManager />
         <LeadMap />
 
         <div className="mt-8 rounded-2xl border border-line bg-white overflow-hidden">

@@ -336,3 +336,28 @@ Backlog: FAQ+schema on ServicesOverview & Pricing, HowTo/Article schema on blog,
       POST /api/leads (ok), /api/admin/stats (OK). Homepage renders + talks to backend.
 - [x] Deployment readiness: PASS. Fixed .gitignore blocking .env files (removed .env/.env.*/*.env at root).
 - [ ] USER ACTION: click platform Deploy button (frontend + backend + Mongo).
+
+## Jeny AI Chat Assistant (2026-08-20)
+- "Jeny — Rajeev's AI assistant" chat widget (components/JenyChat.jsx), bottom-left bubble.
+  Auto pops up 15s after landing (once per browser session, sessionStorage 'jeny_auto') with a
+  free browser-voice greeting (speechSynthesis, mute toggle persisted in localStorage 'jeny_muted').
+- Backend: POST /api/chat (SSE streaming, Gemini 3 Flash via emergentintegrations + EMERGENT_LLM_KEY,
+  shares _llm_gate semaphore). Sessions stored in db.chat_sessions (session_id from localStorage
+  'jeny_sid'); history injected into system prompt (last 12 msgs) so Jeny never re-asks.
+- Phone capture: regex on user messages -> phone_captured on session + auto-creates a lead
+  ("Website chat visitor (Jeny)", service "Jeny chat lead", fires notify_new_lead) exactly once/session.
+  Jeny politely asks for the number until captured, thanks + stops asking after.
+- Public GET /api/chat/history/{sid} (returning visitors resume chat). Admin (JWT):
+  GET /api/admin/chats (list w/ phone badge, preview), GET/DELETE /api/admin/chats/{sid}.
+- Admin panel: new "Jeny chat conversations" card (pages/admin/ChatManager.jsx) — session list,
+  full transcript, green "Chat on WhatsApp" button (wa.me, 10-digit numbers auto-prefixed 91), delete.
+- English-only replies, quick-suggestion chips, typing indicator, streaming tokens.
+- Tested: testing agent iteration_3 — 19/19 backend tests + all frontend flows pass; regression clean.
+  Post-test polish: res.ok check in widget, chat-load error toast, +91 badge display.
+- Voice + highlights update (same day): key phrases (**WhatsApp number**, **phone number**,
+  **free consultation**, service names) rendered bold in brand color (lib/chatText.js, LLM
+  instructed to **bold** them; also regex fallback). Voice conversation mode: mic button
+  (Web Speech API) — tap once to start; recognized speech auto-sends; Jeny speaks her reply and
+  the mic auto-reopens (hands-free loop). Mic auto-starts on chat open for returning voice users
+  (localStorage 'jeny_voice'). Graceful: mic hidden if browser lacks SpeechRecognition.
+  Verified: highlighting E2E via automation; mic UI renders (real-mic loop untestable headless).

@@ -1,0 +1,47 @@
+{
+  "summary": "Full e2e test of the new 'Jeny' AI chat assistant (backend SSE + phone capture + admin chat CRUD) plus frontend widget, 15s auto-popup, admin ChatManager and regression of existing admin/homepage flows. Created /app/backend/tests/test_jeny_chat.py (19 tests, all passing). Frontend: bubble, panel, chips, streaming reply, auto-open, phone capture -> admin session + WhatsApp button + delete all verified on desktop (1920) and mobile (390). No blocking issues found.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/chat", "issue": "SSE errors are swallowed into a canned fallback message streamed with HTTP 200; an LLM outage is indistinguishable from a real reply for clients/monitoring. Consider emitting data: {error:true} alongside the fallback delta."},
+      {"endpoint": "POST /api/chat", "issue": "Once phone_captured=true, a later/corrected number in the same session is ignored (phone never updated). Likely intentional, but a visitor who mistypes their number cannot fix it."},
+      {"endpoint": "GET /api/leads", "issue": "No DELETE endpoint for leads, so chat/lead test data cannot be cleaned up (5 'Jeny chat lead' test rows now present in the leads table)."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "JenyChat.send()", "issue": "res.ok is not checked before res.body.getReader(). On a non-200 (e.g. 422/500/HTML error page) the SSE parse silently fails, busy resets and the user is left with an EMPTY assistant bubble and no error text. Only network throw is handled.", "selector": "[data-testid=\"jeny-message-assistant\"]", "priority": "MEDIUM"},
+      {"component": "admin/ChatManager.load()", "issue": "api.get('/admin/chats') failure is swallowed with .catch(() => {}) — the card shows 'No chat conversations yet.' on an API error instead of an error state.", "selector": "[data-testid=\"chat-manager\"]", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin dashboard (console)", "issues": ["Pre-existing React hydration console error: 'In HTML, <span> cannot be a child of <option>' (unrelated to Jeny, seen on /admin load)"]},
+      {"screen": "Jeny chat panel (desktop 1920)", "issues": ["Panel (bottom-left, 380x560) overlays the hero CTA buttons 'Get your free quote' / 'WhatsApp now' while open — expected for an overlay widget, but worth confirming it is acceptable on the hero"]},
+      {"screen": "Admin > Jeny chat conversations", "issues": ["Phone badge shows raw digits (9876500022) while the WhatsApp link correctly uses 91-prefixed number; displaying +91… in the badge would be clearer"]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_jeny_chat.py",
+    "/app/test_reports/pytest/jeny_results.xml",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Optional: handle !res.ok in JenyChat.send() so backend errors show a visible fallback message instead of an empty assistant bubble.",
+    "Optional: surface a load-error state in ChatManager instead of silently showing 'No chat conversations yet.'",
+    "Pre-existing (not Jeny): /app/backend/tests/test_ui_lead_persistence.py has 4 failures — it asserts leads seeded by a previous iteration's Playwright run (test_pw_*@example.test, 'TEST Call Booking') which are no longer within the GET /api/leads?limit=200 window. Stale test-data dependency, should be rewritten to create its own lead or deleted.",
+    "Cleanup: 5 'Jeny chat lead' test leads remain in the leads collection (no lead delete API)."
+  ],
+  "critical_code_review_comments": [
+    "server.py POST /api/chat: lead-creation guard `phone_captured and not session.get('lead_created') and not session.get('phone_captured')` is correct (fires exactly once per session) — verified by test, no change needed.",
+    "server.py is 1288 lines; the Jeny chat section (~160 lines) should be split into a router module (routers/chat.py) as the file keeps growing.",
+    "All chat responses correctly exclude Mongo _id (verified in admin detail/list responses).",
+    "JenyChat.jsx: SSE reader has no timeout/abort — a hung LLM stream leaves the input disabled indefinitely with no way to cancel."
+  ],
+  "success_rate": {"backend": "100% (19/19 Jeny tests; 49/49 pre-existing tests excluding the 4 stale lead-persistence assertions)", "frontend": "100% of Jeny flows verified"},
+  "seed_data_creation": "Created and then deleted TEST-jeny-* chat sessions and UI-created chat sessions. 5 leads named 'Website chat visitor (Jeny)' (service 'Jeny chat lead', phones 9876500022 / +919876500011 x2 / +919876518106 / +919876543210) remain because there is no lead delete API.",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "admin@rajeevfreelancer.com / RajeevAdmin#2026 (from /app/memory/test_credentials.md)",
+  "context_for_next_testing_agent": "Jeny backend suite lives in /app/backend/tests/test_jeny_chat.py — it is xdist-safe (each class creates its own session; phone number is randomized per run). LLM concurrency is 1 so chat calls queue; each reply takes 3-15s. For frontend: set sessionStorage 'jeny_auto'='1' to suppress the 15s auto-open, localStorage 'jeny_muted'='1' to silence speech, and remove localStorage 'jeny_sid' for a fresh session. Verified: bubble bottom-left, panel, chips, streaming, 15s auto-open (once per browser session), phone capture -> lead -> admin session card with phone badge, transcript, wa.me/91<10-digit> href, delete. Regression verified: homepage renders, floating inquiry/call buttons bottom-right unaffected (no overlap on mobile 390 or desktop), admin login + leads-table + blog-manager + case-study-manager + lead-map + digest-settings all render.",
+  "rca_of_the_issue": "Initial suite run under pytest.ini's '-n 2 --dist loadscope' produced 3 false failures: (a) a hardcoded phone number collided with leads created by an earlier serial run (leads cannot be deleted), and (b) TestAdminChats depended on module-scoped session ids created in another xdist worker. Fixed in the test file by randomizing the capture phone per run and making TestAdminChats create its own chat session. No product defect involved."
+}
