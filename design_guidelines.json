@@ -1,0 +1,123 @@
+{
+  "theme": "light",
+  "archetype": "SWISS & HIGH-CONTRAST (Modified Light)",
+  "typography": {
+    "headings": "Cabinet Grotesk",
+    "body": "Satoshi",
+    "mono_or_accent": "JetBrains Mono",
+    "rules": [
+      "No generic fonts for headings (No Inter/Roboto/Open Sans).",
+      "Headings (Size > 32px) MUST use tight letter spacing (tracking-tight or tracking-tighter).",
+      "Overlines / Labels MUST be Uppercase + Tiny + Wide Spacing (tracking-[0.2em]).",
+      "H1 max text-5xl to text-6xl+ (fluid). Never use text-7xl or above for Hero H1. Avoid jumps larger than 2 Tailwind steps between heading and subheading."
+    ]
+  },
+  "colors": {
+    "background": "#FAFAFA",
+    "foreground": "#111111",
+    "primary": "#0055FF",
+    "primary_foreground": "#FFFFFF",
+    "secondary": "#F3F4F6",
+    "secondary_foreground": "#111111",
+    "accent": "#FF3B30",
+    "muted": "#8A8A8E",
+    "border": "#E5E7EB",
+    "rules": [
+      "No pure black (#000000) or 50% gray (#808080). Tint greys slightly.",
+      "High contrast text ONLY. Never gray-on-gray for critical text.",
+      "Primary CTA gets the vibrant primary color, other buttons are subtle or outlined.",
+      "Avoid completely transparent backgrounds on overlays/dropdowns."
+    ]
+  },
+  "visual_enhancers": {
+    "surfaces": "Solid flat backgrounds with crisp 1px borders. Use subtle, nested radii (e.g., md on child, lg on parent).",
+    "glassmorphism": "Used for sticky header ONLY (Optical Clarity): bg-white/70 backdrop-blur-xl border-b border-black/5.",
+    "textures": "Include a subtle noise/grain overlay across the entire site to remove digital flatness."
+  },
+  "layouts": {
+    "grid_strategy": "The Bento Grid Protocol for Services/Stats. MODE A (Tetris Grid) for portfolio and features. Asymmetry and negative space preferred.",
+    "spacing": "Generous Spacing Philosophy: use p-12, p-16, p-24 for section paddings.",
+    "hero": "Kinetic Hero. Masked line-by-line text reveal on load using Framer Motion.",
+    "marquee": "Slow Editorial Ribbon. Pale background with dark earthy/slate text. Massive gaps (gap-24).",
+    "alignment": "Left-align dense text and paragraphs. Avoid default center-alignment for everything."
+  },
+  "motion": {
+    "scrolling": "Lenis for smooth momentum scrolling. This is MANDATORY for the premium feel.",
+    "reveals": "Scroll-triggered Framer Motion reveals (staggered fade up).",
+    "interactions": "Hover states on all interactive elements (slight lift -translate-y-1, color shift). Focus states must have high contrast rings."
+  },
+  "3d_libraries": {
+    "strategy": "Subtle parallax or 3D hero moment.",
+    "recommended": "framer-motion 3D or react-spring-parallax for layered depth without massive overhead, or a Spline integration if the main agent can utilize it."
+  },
+  "image_urls": [
+    {
+      "url": "https://images.pexels.com/photos/8128191/pexels-photo-8128191.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Asian man using laptop - use as author/Rajeev professional headshot or About section image.",
+      "category": "about"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzB8MHwxfHNlYXJjaHwxfHxkaWdpdGFsJTIwbWFya2V0aW5nJTIwZGFzaGJvYXJkJTIwYWJzdHJhY3R8ZW58MHx8fHwxNzg2OTk0MDQ0fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Digital marketing dashboard analytics - use for SEO & Digital Marketing service card.",
+      "category": "services"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1674027444485-cec3da58eef4?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTV8MHwxfHNlYXJjaHwyfHxhaSUyMGF1dG9tYXRpb24lMjBhYnN0cmFjdCUyMG5vZGV8ZW58MHx8fHwxNzg2OTk0MDQ0fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Abstract AI node network - use for AI Automation service card or section background.",
+      "category": "services"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1553877522-43269d4ea984?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTV8MHwxfHNlYXJjaHwxfHxmcmVlbGFuY2UlMjBkZXZlbG9wZXIlMjBjb25zdWx0YW50JTIwcHJvZmVzc2lvbmFsfGVufDB8fHx8MTc4Njk5NDA0NHww&ixlib=rb-4.1.0&q=85",
+      "description": "Professional using laptop - use for Web & Software Development service card.",
+      "category": "services"
+    }
+  ],
+  "component_styling": {
+    "cards": "Cardless, rectangular, flat with 1px border. Deep contrast on hover.",
+    "buttons": "Pill-shaped or sharp rectangular, high contrast. Primary CTA (Contact/WhatsApp) stands out with hover interaction.",
+    "forms": "Customize Shadcn inputs to be large, airy, with subtle focus rings. Left-aligned labels."
+  },
+  "sections_blueprint": {
+    "Home": {
+      "Hero": "Kinetic typography, line-by-line reveal, 3D element (abstract network or floating shapes), CTA to consultation.",
+      "Marquee": "Slow editorial marquee showing skills (Web Dev, SEO, AI, WordPress) & Locations.",
+      "Manifesto": "Numbered chapters (1. Discover, 2. Build, 3. Scale) with asymmetrical layout.",
+      "Services": "Bento grid layout showcasing core services.",
+      "Portfolio": "Spotlight section with large imagery and clipped frames.",
+      "Stats": "Counters (12+ Years, 500+ Projects) built with Framer Motion.",
+      "Testimonials": "Clean, typography-focused grid or slider.",
+      "Pricing": "High-conversion cards using 'Tracing Beam' or minimal 1px border styling.",
+      "Footer": "Massive typography for CTA, internal SEO links, clean dark/light contrast shift."
+    },
+    "Location_Landing_Template": {
+      "Hero": "Service X in Location Y headline, specific CTA. Masked text reveal.",
+      "Content": "SEO-rich localized content, process, local case studies.",
+      "FAQ": "Accordion (Shadcn) with schema-ready questions. Clean 1px bottom border per item.",
+      "CTA": "Sticky bottom or floating WhatsApp button."
+    }
+  },
+  "instructions_to_main_agent": [
+    "Install required dependencies: framer-motion, lenis, lucide-react, react-fast-marquee.",
+    "Import fonts via index.css using: @import url('https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800,500,700&f[]=satoshi@400,500,700&display=swap');",
+    "Use Cabinet Grotesk for headings and Satoshi for body by updating tailwind.config.js fontFamily.",
+    "Use Shadcn UI for Accordion, Dialog, Forms, but strip the generic 'Vercel' styling to fit the premium bold art direction.",
+    "Never use purely centered generic Bootstrap-style layouts.",
+    "Ensure data-testid is present on all interactive elements (buttons, links, inputs).",
+    "Build a floating WhatsApp button fixed at the bottom right corner of all pages.",
+    "Write SEO-friendly semantic HTML (header, nav, main, section, article, footer)."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "You tend to converge toward generic, 'on distribution' outputs. Avoid this.",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur) for sticky nav.",
+    "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms.",
+    "You MUST NOT center align the app container. No .App { text-align: center; }.",
+    "Always use modern button styles with interaction animations.",
+    "NEVER use AI assistant Emoji characters for icons. Use Phosphor or Lucide icons.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Main agent relies on these image URLs. Missing categories = main agent will use placeholder text which is FORBIDDEN.",
+    "All interactive and key informational elements MUST include a data-testid attribute to facilitate robust automated testing."
+  ]
+}

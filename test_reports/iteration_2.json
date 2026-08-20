@@ -1,0 +1,52 @@
+{
+  "summary": "Full E2E test of new conversion-tracking features. Backend: 38/38 pytest tests pass (leads CRUD + persistence, admin tracking settings group PUT/GET incl. public exposure, auth guards, services catalog regression). Frontend (Playwright, desktop 1920 + mobile 390x844): all four lead forms (contact page, floating Inquiry modal, floating Call scheduler, homepage bottom form) submit successfully and redirect to /thank-you with personalized 'Thank you, {firstname}' heading, 3 step cards, WhatsApp + Call CTAs, and robots='noindex, nofollow'. All 8 tracking fields exist in Admin > Site settings; head_code saved via admin UI executed site-wide (window.__testHead===1, #rf-custom-head-code marker present) and thankyou_code executed only on /thank-you (window.__tyTest===1). SPA page_view verified firing on route change to /thank-you via injected gtag stub. UI-submitted leads verified persisted via GET /api/leads with admin JWT. All tracking fields were reset to empty strings afterwards (verified via GET /api/settings).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/leads", "issue": "Accepts a lead with only 'name' (email and phone both empty/absent) -> 200. Intentional for the call-booking flow, but a lead with no contact channel is unactionable; consider requiring email OR phone server-side."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "FloatingActions modal header", "issue": "Modal title/subtitle are white text (rgb(255,255,255)) rendered above the modal card, over the blurred light page background — 'Send an inquiry' / 'Book a call' are near-illegible on light pages (verified computed color white, overlay fully animated in). Contrast failure.", "selector": "[data-testid=\"inquiry-modal\"] p, [data-testid=\"call-modal\"] p", "priority": "MEDIUM"},
+      {"component": "FloatingActions vs page content (mobile 390x844)", "issue": "Floating 'Inquiry' pill overlaps content text: on /thank-you it covers Step 2 card text ('Reply within ~30 min' / 'During business hours you'll hear back fast'), and on /contact it covers the footer CTA heading. Submit buttons themselves are NOT blocked (elementFromPoint at contact-submit center = contact-submit).", "selector": "[data-testid=\"floating-inquiry-btn\"]", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin > Site settings", "issues": ["Section header still reads 'Site settings (SEO, contact, social, business)' — does not mention the new Conversion tracking group, so admin may not know it's there."]},
+      {"screen": "/thank-you (desktop 1920)", "issues": ["Large empty vertical gap between hero copy and footer at 1920x1080 because content is centered in a max-w-3xl column with min-h-[80vh]; visually sparse but not broken."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_tracking_leads.py",
+    "/app/backend/tests/test_ui_lead_persistence.py",
+    "/app/backend/tests/test_site_settings.py",
+    "/app/backend/tests/test_case_studies.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Fix modal header text contrast in FloatingActions (white text over light blurred background) — e.g. move title inside the white card or add a dark scrim behind it.",
+    "On mobile, add bottom padding / hide-on-scroll behaviour so the floating Inquiry pill does not sit on top of /thank-you step-card text and footer CTA text.",
+    "Optional: rename the Site settings section header to include 'conversion tracking'.",
+    "Optional hardening: /thank-you fires trackConversion + thankyou_code on every mount, including direct visits and page reloads with no navigation state — this can inflate Google Ads/Meta conversion counts. Consider a one-shot guard (sessionStorage key per lead id) and passing the lead id through navigate state.",
+    "Optional cleanup: CallScheduler sets done=true and immediately navigates to /thank-you, so the 'call-success' success block (data-testid=call-success) is dead code."
+  ],
+  "critical_code_review_comments": [
+    "ThankYou.jsx fires trackConversion()/fireThankyouCode() unconditionally on mount — reloading /thank-you or bookmarking it double-counts conversions. Guard with a per-submission token.",
+    "siteConfig.injectHtml wraps injected HTML in a display:none div; fine for <script>, but any <noscript>/<img> pixel or visible widget pasted in body_code will be invisible — document this limitation in the admin hint.",
+    "initTracking() runs once behind window.__trackingLoaded; if admin changes tracking IDs, existing sessions never pick them up until a hard reload (acceptable, but note the admin hint already says 'Save + refresh')."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_tracking_leads.py (new)",
+    "/app/backend/tests/test_ui_lead_persistence.py (new)",
+    "/app/backend/tests/test_site_settings.py (fixed stale hardcoded BASE_URL/admin creds — was erroring)",
+    "/app/backend/tests/test_case_studies.py (fixed stale hardcoded BASE_URL/admin creds — was 404/401 failing)"
+  ],
+  "success_rate": {"backend": "100% (38/38)", "frontend": "100% of functional flows passed; 2 medium UI/design issues found"},
+  "seed_data_creation": "Test leads created (safe to leave / delete): TEST Playwright Contact, TEST Inquiry Modal, TEST Home Form, TEST Call Booking, TEST TY Code, TEST Mobile User, TEST SPA PageView, plus TEST_Lead <uuid> from pytest. One pytest lead status was toggled contacted->new (reset).",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "admin@rajeevfreelancer.com / RajeevAdmin#2026 (from /app/memory/test_credentials.md) — valid",
+  "context_for_next_testing_agent": "Backend regression suite lives in /app/backend/tests (38 tests, all green; run: cd /app/backend && python -m pytest tests/ -q). test_tracking_leads.py covers the tracking settings group and resets head_code/body_code/thankyou_code/gtm_id to '' in a session teardown. All tracking fields are currently empty (verified via GET /api/settings). Frontend flows already verified: contact/inquiry-modal/call-scheduler/homepage forms -> /thank-you, head_code + thankyou_code execution, SPA page_view, noindex meta, mobile 390x844 no horizontal overflow on /, /contact, /thank-you and the inquiry modal. Remaining open items are purely visual (modal header contrast, floating button overlap on mobile).",
+  "rca_of_the_issue": "Modal header contrast: FloatingActions.Modal renders title/subtitle with text-white outside the white card, relying on the bg-ink/60 backdrop for contrast; because the header sits above the card over a blurred light hero, the effective background is light and white text loses contrast. Floating-button overlap: the fixed bottom-right stack has z-50 and pages have no extra bottom padding on mobile, so the pill lands on top of content in the lower-right region."
+}
