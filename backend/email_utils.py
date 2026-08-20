@@ -203,7 +203,7 @@ async def send_chat_alert(info: dict) -> None:
         wa = f"https://wa.me/{digits}"
         detail_rows = []
         for label, key in [("Name", "name"), ("Phone / WhatsApp", "phone"), ("Budget", "budget"),
-                           ("Interested in", "service"), ("Page", "page")]:
+                           ("Interested in", "service"), ("Preferred call", "call_time"), ("Page", "page")]:
             val = str(info.get(key) or "—")
             detail_rows.append(
                 f'<tr><td style="padding:6px 14px;color:#8A8A8E;font-size:12px;'
@@ -239,8 +239,16 @@ async def send_chat_alert(info: dict) -> None:
         logger.error(f"send_chat_alert failed: {e}")
 
 
-async def send_lead_digest(leads: list, period_label: str) -> int:
+async def send_lead_digest(leads: list, period_label: str, chat_stats: dict | None = None) -> int:
     """Owner digest of recent leads. Returns count sent (0 if none/failed). Never raises."""
+    cs = chat_stats or {}
+    jeny_line = (
+        '<tr><td style="padding:0 24px 16px">'
+        '<div style="background:#F5F8FF;border:1px solid #DCE6FF;border-radius:12px;padding:12px 16px;'
+        'font-size:13px;color:#141414">🤖 <strong>Jeny chats:</strong> '
+        f'{int(cs.get("sessions", 0))} conversation(s) · {int(cs.get("captured", 0))} WhatsApp number(s) captured'
+        '</div></td></tr>'
+    ) if chat_stats is not None else ""
     try:
         if not leads:
             inner = (
@@ -249,6 +257,7 @@ async def send_lead_digest(leads: list, period_label: str) -> int:
                 f'<div style="font-size:12px;opacity:.85">{escape(period_label)}</div></td></tr>'
                 '<tr><td style="padding:24px;color:#141414;font-size:14px">No new leads in this period. '
                 'Your pipeline is quiet — a good time to publish or promote a location page.</td></tr>'
+                f'{jeny_line}'
             )
             await send_email(to=OWNER_EMAIL, subject="Daily lead digest — 0 new leads", html=_shell(inner))
             return 0
@@ -274,6 +283,7 @@ async def send_lead_digest(leads: list, period_label: str) -> int:
             '<th align="left" style="padding:6px 12px;font-size:11px;color:#8A8A8E;text-transform:uppercase;letter-spacing:1px">Status</th></tr>'
             f'{"".join(rows)}'
             '</table></td></tr>'
+            f'{jeny_line}'
             f'<tr><td style="padding:4px 24px 26px"><a href="{SITE_URL}/admin" '
             'style="display:inline-block;background:#141414;color:#fff;text-decoration:none;'
             'padding:12px 22px;border-radius:999px;font-size:13px">Open leads dashboard</a></td></tr>'

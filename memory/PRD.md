@@ -378,5 +378,20 @@ Backlog: FAQ+schema on ServicesOverview & Pricing, HowTo/Article schema on blog,
   Regression: 19/19 jeny pytest suite passes. Test data cleaned.
 - DEPLOY: attempted — blocked: first deploy costs 50 ECUs/month, balance 40 ECUs. USER ACTION:
   add credits/upgrade, then re-request deploy.
-- RESEND DOMAIN (USER DNS ACTION): verify rajeevfreelancer.com at resend.com/domains, then set
-  SENDER_EMAIL=leads@rajeevfreelancer.com in backend/.env to exit test mode.
+- RESEND DOMAIN: DONE — rajeevfreelancer.com shows "verified" via Resend API (2026-08-20).
+  SENDER_EMAIL switched to leads@rajeevfreelancer.com; live send verified (id returned).
+  OWNER_EMAIL kept at rajeev.gits@gmail.com (known-real inbox). Prospect confirmations now deliver.
+
+## Digest Chat Stats + Smart Handoff Hours (2026-08-20)
+- Daily digest now includes Jeny chat stats: sessions started + WhatsApp numbers captured in the
+  period (send_lead_digest chat_stats param; _collect_and_send_digest counts chat_sessions).
+  Manual digest send verified (sent=true).
+- Smart hours: Jeny's system prompt gets live IST time + ONLINE/OFFLINE (9 AM-7 PM IST Mon-Sat)
+  and tells visitors whether Rajeev is available now. Verified: correctly said "online" at 4:45 PM IST.
+- In-chat call booking: "Book a call with Rajeev" button in the Jeny panel dispatches window event
+  'rf-open-call' -> FloatingActions opens the existing CallScheduler modal (verified E2E).
+  Extraction now also captures call_time (preferred call day/time) -> prepended to lead message
+  ("📞 Call requested: ...") + shown in the chat alert email ("Preferred call" row).
+  Verified E2E: "book a call tomorrow at 3pm... 9911223344" -> lead {Amit, Jeny chat: SEO project,
+  message starts with call request}.
+- DEPLOY: retried — still blocked (needs 50 ECUs, balance 12). USER ACTION: add credits/upgrade.

@@ -537,8 +537,12 @@ async def _collect_and_send_digest(hours: int = 24) -> int:
     leads = await db.leads.find(
         {"created_at": {"$gte": since_iso}}, {"_id": 0}
     ).sort("created_at", -1).to_list(500)
+    chat_stats = {
+        "sessions": await db.chat_sessions.count_documents({"created_at": {"$gte": since_iso}}),
+        "captured": await db.chat_sessions.count_documents({"created_at": {"$gte": since_iso}, "phone_captured": True}),
+    }
     label = f"Last {hours}h · since {since.strftime('%d %b %Y %H:%M UTC')}"
-    return await send_lead_digest(leads, label)
+    return await send_lead_digest(leads, label, chat_stats)
 
 
 @api_router.post("/admin/digest/send")
@@ -1103,6 +1107,14 @@ Your goals:
 3. Never make up facts, case-study numbers or prices. If unsure, offer the **free consultation**.
 
 The visitor is currently on the page: {page or '/'}."""
+    now_ist = datetime.now(ZoneInfo("Asia/Kolkata"))
+    online = now_ist.weekday() < 6 and 9 <= now_ist.hour < 19
+    base += (f"\n\nRight now it is {now_ist.strftime('%A %I:%M %p')} in India (IST). "
+             + ("Rajeev is currently ONLINE (business hours 9 AM - 7 PM IST, Mon-Sat) and usually replies on WhatsApp within the hour."
+                if online else
+                "Rajeev is currently OFFLINE (business hours 9 AM - 7 PM IST, Mon-Sat) — reassure the visitor he will personally reply on WhatsApp as soon as he is back.")
+             + "\nIf the visitor wants to talk to Rajeev, mention whether he is online right now and offer to **book a call**: "
+               "they can tap the **Book a call** button just below this chat, or simply tell you their preferred day and time and Rajeev will confirm it on WhatsApp.")
     if visitor_name:
         base += f"\n\nThe visitor's name is {visitor_name}. Address them by name naturally; do NOT ask for their name again."
     else:
@@ -1133,10 +1145,11 @@ async def _extract_chat_info(sid: str) -> dict:
     transcript = "\n".join(f"{'Visitor' if m['role'] == 'user' else 'Jeny'}: {m['text']}" for m in msgs)
     prompt = (
         'From this website chat, extract the VISITOR\'s details. Return ONLY minified JSON: '
-        '{"name":"","budget":"","service":""}. Use "" when not mentioned. '
+        '{"name":"","budget":"","service":"","call_time":""}. Use "" when not mentioned. '
         'name = the visitor\'s own name only (never Rajeev or Jeny). '
         'budget = any project budget amount/range they stated, verbatim. '
-        'service = the service they need, in 2-4 words.\n\nChat:\n' + transcript
+        'service = the service they need, in 2-4 words. '
+        'call_time = their preferred call day/time if they asked for a call, verbatim.\n\nChat:\n' + transcript
     )
     try:
         from emergentintegrations.llm.chat import LlmChat, UserMessage
@@ -1148,7 +1161,7 @@ async def _extract_chat_info(sid: str) -> dict:
         text = re.sub(r"^```(json)?|```$", "", str(resp).strip(), flags=re.MULTILINE).strip()
         m = re.search(r"\{.*\}", text, re.DOTALL)
         data = json.loads(m.group(0) if m else text)
-        return {k: str(data.get(k) or "").strip()[:120] for k in ("name", "budget", "service")}
+        return {k: str(data.get(k) or "").strip()[:120] for k in ("name", "budget", "service", "call_time")}
     except Exception as e:
         logger.warning(f"jeny extract failed for {sid}: {e}")
         return {}
@@ -1159,18 +1172,22 @@ async def _chat_lead(sid: str, phone: str, last_msg: str):
         info = await _extract_chat_info(sid)
         name = info.get("name") or "Website chat visitor (Jeny)"
         service = f"Jeny chat: {info['service']}" if info.get("service") else "Jeny chat lead"
+        message = f"Phone captured by Jeny AI chat. Last message: {last_msg[:300]}"
+        if info.get("call_time"):
+            message = f"📞 Call requested: {info['call_time']}. " + message
         doc = Lead(name=name, email="", phone=phone, service=service, budget=info.get("budget", ""),
-                   message=f"Phone captured by Jeny AI chat. Last message: {last_msg[:300]}",
+                   message=message,
                    source_path="/jeny-chat").model_dump()
         await db.leads.insert_one({**doc})
         session = await db.chat_sessions.find_one_and_update(
             {"session_id": sid},
-            {"$set": {"lead_created": True, "lead_id": doc["id"],
+            {"$set": {"lead_created": True, "lead_id": doc["id"], "call_time": info.get("call_time", ""),
                       "visitor_name": info.get("name", ""), "budget": info.get("budget", "")}},
             projection={"_id": 0},
         )
         alert = {"name": info.get("name", ""), "phone": phone, "budget": info.get("budget", ""),
-                 "service": info.get("service", ""), "page": (session or {}).get("page", ""),
+                 "service": info.get("service", ""), "call_time": info.get("call_time", ""),
+                 "page": (session or {}).get("page", ""),
                  "messages": (session or {}).get("messages", [])}
         asyncio.create_task(send_chat_alert(alert))
         logger.info(f"Jeny captured a lead: {phone} ({name}) session {sid}")
@@ -1193,6 +1210,11 @@ async def _update_lead_info(sid: str):
         if info.get("budget") and not s.get("budget"):
             sess_set["budget"] = info["budget"]
             lead_set["budget"] = info["budget"]
+        if info.get("call_time") and not s.get("call_time"):
+            sess_set["call_time"] = info["call_time"]
+            if s.get("lead_id"):
+                lead = await db.leads.find_one({"id": s["lead_id"]}, {"_id": 0, "message": 1})
+                lead_set["message"] = f"📞 Call requested: {info['call_time']}. " + (lead or {}).get("message", "")
         if sess_set:
             await db.chat_sessions.update_one({"session_id": sid}, {"$set": sess_set})
         if lead_set and s.get("lead_id"):
@@ -1232,7 +1254,7 @@ async def jeny_chat(payload: ChatInput):
     )
     if phone_captured and not session.get("lead_created") and not session.get("phone_captured"):
         asyncio.create_task(_chat_lead(sid, phone, msg))
-    elif session.get("lead_created") and (not session.get("visitor_name") or not session.get("budget")):
+    elif session.get("lead_created") and (not session.get("visitor_name") or not session.get("budget") or not session.get("call_time")):
         asyncio.create_task(_update_lead_info(sid))
 
     history = session.get("messages", [])[-12:]

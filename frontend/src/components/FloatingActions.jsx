@@ -110,6 +110,11 @@ export default function FloatingActions() {
 
   useEffect(() => { document.body.style.overflow = modal ? "hidden" : ""; return () => { document.body.style.overflow = ""; }; }, [modal]);
   useEffect(() => { setModal(null); }, [pathname]);
+  useEffect(() => {
+    const h = () => setModal("call");
+    window.addEventListener("rf-open-call", h);
+    return () => window.removeEventListener("rf-open-call", h);
+  }, []);
 
   // Prefill from the current route (service hub / location page)
   const parts = pathname.split("/").filter(Boolean);

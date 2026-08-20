@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, X, Send, Volume2, VolumeX, Bot, Mic, MicOff } from "lucide-react";
+import { Sparkles, X, Send, Volume2, VolumeX, Bot, Mic, MicOff, PhoneCall } from "lucide-react";
 import { API } from "@/lib/api";
 import { renderChatText } from "@/lib/chatText";
 
@@ -328,6 +328,15 @@ export default function JenyChat() {
                 </div>
               )}
               <div ref={bottomRef} />
+            </div>
+
+            {/* Book a call */}
+            <div className="flex justify-center border-t border-line bg-white px-3 pt-2">
+              <button type="button" data-testid="jeny-book-call"
+                onClick={() => window.dispatchEvent(new Event("rf-open-call"))}
+                className="inline-flex items-center gap-1.5 rounded-full bg-brand/5 border border-brand/20 px-4 py-1.5 text-xs font-semibold text-brand hover:bg-brand hover:text-white transition-colors">
+                <PhoneCall className="h-3.5 w-3.5" /> Book a call with Rajeev
+              </button>
             </div>
 
             {/* Input */}
