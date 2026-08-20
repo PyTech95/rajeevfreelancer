@@ -361,3 +361,22 @@ Backlog: FAQ+schema on ServicesOverview & Pricing, HowTo/Article schema on blog,
   the mic auto-reopens (hands-free loop). Mic auto-starts on chat open for returning voice users
   (localStorage 'jeny_voice'). Graceful: mic hidden if browser lacks SpeechRecognition.
   Verified: highlighting E2E via automation; mic UI renders (real-mic loop untestable headless).
+
+## Chat Alerts + Lead Qualifying (2026-08-20)
+- Instant chat-capture alert email (email_utils.send_chat_alert): fires the moment Jeny captures a
+  phone number — includes name/phone/budget/service/page, full conversation transcript, and a green
+  "Reply on WhatsApp" (wa.me) button + dashboard link. Sent to OWNER_EMAIL (replaces generic
+  notify_new_lead for chat leads). Verified live send (test mode delivers to rajeev.gits@gmail.com).
+- Jeny lead qualifying: system prompt now asks name early, then phone, then approx budget (one at a
+  time, conversational). _extract_chat_info (Gemini flash, JSON) pulls name/budget/service from the
+  transcript at phone-capture time -> lead created with real name, "Jeny chat: <service>", budget.
+  _update_lead_info backfills name/budget on later messages (capped 5 attempts/session). Session
+  stores visitor_name/budget; prompt gets them so Jeny never re-asks. Admin ChatManager shows
+  name + budget in list + detail header.
+- Verified E2E via curl: "Hi I am Priya... ecommerce website" + "budget 80,000... WhatsApp 98123456xx"
+  -> lead {name: Priya, service: Jeny chat: ecommerce website, budget: around 80,000 rupees}.
+  Regression: 19/19 jeny pytest suite passes. Test data cleaned.
+- DEPLOY: attempted — blocked: first deploy costs 50 ECUs/month, balance 40 ECUs. USER ACTION:
+  add credits/upgrade, then re-request deploy.
+- RESEND DOMAIN (USER DNS ACTION): verify rajeevfreelancer.com at resend.com/domains, then set
+  SENDER_EMAIL=leads@rajeevfreelancer.com in backend/.env to exit test mode.

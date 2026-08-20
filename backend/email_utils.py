@@ -193,6 +193,52 @@ async def send_lead_confirmation(lead: dict) -> None:
         logger.error(f"send_lead_confirmation failed: {e}")
 
 
+async def send_chat_alert(info: dict) -> None:
+    """Instant owner alert when Jeny (AI chat) captures a visitor's phone number. Never raises."""
+    try:
+        phone = str(info.get("phone") or "")
+        digits = re.sub(r"\D", "", phone)
+        if len(digits) == 10:
+            digits = "91" + digits
+        wa = f"https://wa.me/{digits}"
+        detail_rows = []
+        for label, key in [("Name", "name"), ("Phone / WhatsApp", "phone"), ("Budget", "budget"),
+                           ("Interested in", "service"), ("Page", "page")]:
+            val = str(info.get(key) or "—")
+            detail_rows.append(
+                f'<tr><td style="padding:6px 14px;color:#8A8A8E;font-size:12px;'
+                f'text-transform:uppercase;letter-spacing:1px;white-space:nowrap">{escape(label)}</td>'
+                f'<td style="padding:6px 14px;color:#141414;font-size:14px">{escape(val)}</td></tr>'
+            )
+        chat_rows = []
+        for m in (info.get("messages") or [])[-12:]:
+            who = "Visitor" if m.get("role") == "user" else "Jeny"
+            color = "#0055FF" if who == "Visitor" else "#8A8A8E"
+            text = escape(str(m.get("text") or "").replace("**", ""))[:400]
+            chat_rows.append(
+                f'<p style="margin:0 0 8px;font-size:13px;line-height:1.5">'
+                f'<strong style="color:{color}">{who}:</strong> <span style="color:#141414">{text}</span></p>'
+            )
+        inner = (
+            '<tr><td style="background:#0055FF;padding:20px 24px;color:#fff">'
+            '<div style="font-size:18px;font-weight:bold">Jeny captured a new lead 🎉</div>'
+            '<div style="font-size:12px;opacity:.85">A website visitor just shared their number in chat</div></td></tr>'
+            f'<tr><td style="padding:12px 10px"><table role="presentation" width="100%">{"".join(detail_rows)}</table></td></tr>'
+            f'<tr><td style="padding:6px 24px 18px">'
+            f'<a href="{wa}" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;'
+            'padding:12px 22px;border-radius:999px;font-size:13px;font-weight:bold;margin-right:8px">Reply on WhatsApp</a>'
+            f'<a href="{SITE_URL}/admin" style="display:inline-block;background:#141414;color:#fff;text-decoration:none;'
+            'padding:12px 22px;border-radius:999px;font-size:13px">Open dashboard</a></td></tr>'
+            '<tr><td style="padding:4px 24px 20px">'
+            '<div style="font-size:11px;color:#8A8A8E;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Conversation</div>'
+            f'<div style="background:#FAFAFA;border:1px solid #E5E7EB;border-radius:12px;padding:14px 16px">{"".join(chat_rows)}</div></td></tr>'
+        )
+        subject = f"Jeny captured a lead: {info.get('name') or phone}"
+        await send_email(to=OWNER_EMAIL, subject=subject, html=_shell(inner))
+    except Exception as e:
+        logger.error(f"send_chat_alert failed: {e}")
+
+
 async def send_lead_digest(leads: list, period_label: str) -> int:
     """Owner digest of recent leads. Returns count sent (0 if none/failed). Never raises."""
     try:

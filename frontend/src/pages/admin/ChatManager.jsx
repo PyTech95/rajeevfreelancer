@@ -75,7 +75,12 @@ export default function ChatManager() {
                       </span>
                       <span className="font-mono text-[10px] text-muted-foreground">{s.message_count} msg</span>
                     </div>
-                    <p className="mt-2 line-clamp-2 text-xs text-ink">{s.last_message || "—"}</p>
+                    <p className="mt-2 line-clamp-2 text-xs text-ink">
+                      {(s.visitor_name || s.budget) && (
+                        <span className="font-semibold">{[s.visitor_name, s.budget && `Budget: ${s.budget}`].filter(Boolean).join(" · ")} — </span>
+                      )}
+                      {s.last_message || "—"}
+                    </p>
                     <p className="mt-1.5 font-mono text-[10px] text-muted-foreground">
                       {new Date(s.updated_at).toLocaleString()} · {s.page || "/"}
                     </p>
@@ -93,8 +98,13 @@ export default function ChatManager() {
                   <div className="flex h-full max-h-[480px] flex-col">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-white px-4 py-3 rounded-t-xl">
                       <div>
-                        <p className="text-sm font-semibold">{detail.phone_captured ? detail.phone : "Visitor (no number shared)"}</p>
-                        <p className="font-mono text-[10px] text-muted-foreground">Started {new Date(detail.created_at).toLocaleString()}</p>
+                        <p className="text-sm font-semibold">
+                          {detail.visitor_name || (detail.phone_captured ? detail.phone : "Visitor (no number shared)")}
+                          {detail.visitor_name && detail.phone_captured && <span className="ml-2 font-normal text-muted-foreground">{detail.phone}</span>}
+                        </p>
+                        <p className="font-mono text-[10px] text-muted-foreground">
+                          Started {new Date(detail.created_at).toLocaleString()}{detail.budget ? ` · Budget: ${detail.budget}` : ""}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
                         {detail.phone_captured && (

@@ -23,7 +23,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr
 
 from data import SERVICES, COUNTRIES, SERVICE_MAP, CITY_MAP, TOP_CITY_SLUGS, india_city_entries
-from email_utils import notify_new_lead, send_lead_confirmation, send_lead_digest
+from email_utils import notify_new_lead, send_lead_confirmation, send_lead_digest, send_chat_alert
 from blog_seed import BLOG_SEED
 from case_seed import CASE_SEED
 
@@ -1082,7 +1082,7 @@ from fastapi.responses import StreamingResponse
 
 PHONE_RE = re.compile(r"(\+?\d[\d\s\-\(\)\.]{7,16}\d)")
 
-def _jeny_system(phone_captured: bool, phone: str, transcript: str, page: str) -> str:
+def _jeny_system(phone_captured: bool, phone: str, transcript: str, page: str, visitor_name: str = "", budget: str = "") -> str:
     services = "\n".join(f"- {s['name']} ({s['short']})" for s in SERVICES)
     base = f"""You are Jeny, the friendly AI assistant on Rajeev's freelance portfolio website (rajeevfreelancer.com).
 Always reply in English only. Keep answers short, warm and helpful: 1-4 sentences, no long lists unless asked.
@@ -1099,10 +1099,16 @@ Services Rajeev offers:
 
 Your goals:
 1. Answer the visitor's questions about Rajeev's services, experience, process, and how to get started.
-2. Politely collect the visitor's phone/WhatsApp number so Rajeev can follow up personally.
-3. Never make up facts, case-study numbers or prices. If unsure, offer the free consultation.
+2. Qualify the lead naturally, ONE detail at a time (never like a form): early on ask the visitor's **name**; politely collect their **phone/WhatsApp number**; and once they show project interest, ask their approximate **project budget**.
+3. Never make up facts, case-study numbers or prices. If unsure, offer the **free consultation**.
 
 The visitor is currently on the page: {page or '/'}."""
+    if visitor_name:
+        base += f"\n\nThe visitor's name is {visitor_name}. Address them by name naturally; do NOT ask for their name again."
+    else:
+        base += "\n\nYou do NOT know the visitor's name yet — ask it politely early in the conversation."
+    if budget:
+        base += f"\nThe visitor already shared their budget ({budget}); do NOT ask for it again."
     if phone_captured:
         base += f"\n\nThe visitor has ALREADY shared their phone number ({phone}). Do NOT ask for it again. If they just shared it, thank them once and tell them Rajeev will reach out on WhatsApp shortly."
     else:
@@ -1118,17 +1124,81 @@ class ChatInput(BaseModel):
     page: Optional[str] = ""
 
 
+async def _extract_chat_info(sid: str) -> dict:
+    """LLM extraction of visitor name/budget/service from the chat. Returns {} on failure."""
+    s = await db.chat_sessions.find_one({"session_id": sid}, {"_id": 0, "messages": 1})
+    msgs = (s or {}).get("messages", [])[-20:]
+    if not msgs:
+        return {}
+    transcript = "\n".join(f"{'Visitor' if m['role'] == 'user' else 'Jeny'}: {m['text']}" for m in msgs)
+    prompt = (
+        'From this website chat, extract the VISITOR\'s details. Return ONLY minified JSON: '
+        '{"name":"","budget":"","service":""}. Use "" when not mentioned. '
+        'name = the visitor\'s own name only (never Rajeev or Jeny). '
+        'budget = any project budget amount/range they stated, verbatim. '
+        'service = the service they need, in 2-4 words.\n\nChat:\n' + transcript
+    )
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+
+        chat = LlmChat(api_key=os.environ["EMERGENT_LLM_KEY"], session_id=f"jeny-extract-{sid}-{uuid.uuid4().hex[:6]}",
+                       system_message="You extract structured data from chat transcripts. Return only valid minified JSON.").with_model("gemini", "gemini-3-flash-preview")
+        async with _llm_gate:
+            resp = await chat.send_message(UserMessage(text=prompt))
+        text = re.sub(r"^```(json)?|```$", "", str(resp).strip(), flags=re.MULTILINE).strip()
+        m = re.search(r"\{.*\}", text, re.DOTALL)
+        data = json.loads(m.group(0) if m else text)
+        return {k: str(data.get(k) or "").strip()[:120] for k in ("name", "budget", "service")}
+    except Exception as e:
+        logger.warning(f"jeny extract failed for {sid}: {e}")
+        return {}
+
+
 async def _chat_lead(sid: str, phone: str, last_msg: str):
     try:
-        doc = Lead(name="Website chat visitor (Jeny)", email="", phone=phone,
-                   service="Jeny chat lead", message=f"Phone captured by Jeny AI chat. Last message: {last_msg[:300]}",
+        info = await _extract_chat_info(sid)
+        name = info.get("name") or "Website chat visitor (Jeny)"
+        service = f"Jeny chat: {info['service']}" if info.get("service") else "Jeny chat lead"
+        doc = Lead(name=name, email="", phone=phone, service=service, budget=info.get("budget", ""),
+                   message=f"Phone captured by Jeny AI chat. Last message: {last_msg[:300]}",
                    source_path="/jeny-chat").model_dump()
         await db.leads.insert_one({**doc})
-        await db.chat_sessions.update_one({"session_id": sid}, {"$set": {"lead_created": True}})
-        asyncio.create_task(notify_new_lead(doc))
-        logger.info(f"Jeny captured a lead: {phone} (session {sid})")
+        session = await db.chat_sessions.find_one_and_update(
+            {"session_id": sid},
+            {"$set": {"lead_created": True, "lead_id": doc["id"],
+                      "visitor_name": info.get("name", ""), "budget": info.get("budget", "")}},
+            projection={"_id": 0},
+        )
+        alert = {"name": info.get("name", ""), "phone": phone, "budget": info.get("budget", ""),
+                 "service": info.get("service", ""), "page": (session or {}).get("page", ""),
+                 "messages": (session or {}).get("messages", [])}
+        asyncio.create_task(send_chat_alert(alert))
+        logger.info(f"Jeny captured a lead: {phone} ({name}) session {sid}")
     except Exception as e:
         logger.warning(f"jeny lead create failed: {e}")
+
+
+async def _update_lead_info(sid: str):
+    """Post-capture: fill in name/budget on the session + lead as the chat continues."""
+    try:
+        s = await db.chat_sessions.find_one({"session_id": sid}, {"_id": 0})
+        if not s or not s.get("lead_created") or int(s.get("extract_attempts", 0)) >= 5:
+            return
+        await db.chat_sessions.update_one({"session_id": sid}, {"$inc": {"extract_attempts": 1}})
+        info = await _extract_chat_info(sid)
+        sess_set, lead_set = {}, {}
+        if info.get("name") and not s.get("visitor_name"):
+            sess_set["visitor_name"] = info["name"]
+            lead_set["name"] = info["name"]
+        if info.get("budget") and not s.get("budget"):
+            sess_set["budget"] = info["budget"]
+            lead_set["budget"] = info["budget"]
+        if sess_set:
+            await db.chat_sessions.update_one({"session_id": sid}, {"$set": sess_set})
+        if lead_set and s.get("lead_id"):
+            await db.leads.update_one({"id": s["lead_id"]}, {"$set": lead_set})
+    except Exception as e:
+        logger.warning(f"jeny lead update failed: {e}")
 
 
 @api_router.post("/chat")
@@ -1162,10 +1232,13 @@ async def jeny_chat(payload: ChatInput):
     )
     if phone_captured and not session.get("lead_created") and not session.get("phone_captured"):
         asyncio.create_task(_chat_lead(sid, phone, msg))
+    elif session.get("lead_created") and (not session.get("visitor_name") or not session.get("budget")):
+        asyncio.create_task(_update_lead_info(sid))
 
     history = session.get("messages", [])[-12:]
     transcript = "\n".join(f"{'Visitor' if h['role'] == 'user' else 'Jeny'}: {h['text']}" for h in history)
-    system = _jeny_system(phone_captured, phone, transcript, payload.page or session.get("page", ""))
+    system = _jeny_system(phone_captured, phone, transcript, payload.page or session.get("page", ""),
+                          session.get("visitor_name", ""), session.get("budget", ""))
 
     async def gen():
         full = []
@@ -1217,6 +1290,7 @@ async def admin_list_chats(admin: dict = Depends(get_current_admin), limit: int 
         out.append({
             "session_id": s["session_id"], "created_at": s.get("created_at"), "updated_at": s.get("updated_at"),
             "page": s.get("page", ""), "phone": s.get("phone", ""), "phone_captured": bool(s.get("phone_captured")),
+            "visitor_name": s.get("visitor_name", ""), "budget": s.get("budget", ""),
             "lead_created": bool(s.get("lead_created")), "message_count": len(msgs),
             "last_message": (msgs[-1]["text"][:140] if msgs else ""),
         })
