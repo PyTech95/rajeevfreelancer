@@ -1,0 +1,43 @@
+{
+  "summary": "Full backend + frontend verification of the Rajeev Freelancer deployment pass, focused on the admin offer/popup control panel. Backend: 34/34 pytest tests pass (health, public /api/settings, admin site settings CRUD+merge, digest settings, warmup, case studies CRUD, leads, sitemap, marketing toggle). Frontend: admin login at /admin with seeded credentials works in-browser (no real bug - previous automation failure was a harness timing issue), Leads Dashboard renders (stat cards, digest panel, site-settings panel expanded by default), all three 'Launch offers & popup' controls render, unchecking 'Show the exit-intent offer popup' + Save shows 'Site settings saved' toast and GET /api/settings returns marketing.popup_enabled=false. Public homepage with popup disabled never renders the exit-intent modal even on simulated exit intent; after re-enabling via admin API the modal appears, closes correctly, and its lead form submits successfully and persists to /api/leads. Marketing settings restored to defaults {offers_enabled:true, popup_enabled:true, offers_end_date:''}.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/leads", "issue": "No DELETE endpoint for leads (only PATCH /api/leads/{id}); QA-created TEST_ leads cannot be cleaned up programmatically."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Admin dashboard (Admin.jsx selects)", "issue": "React console error on /admin: 'In HTML, <span> cannot be a child of <option> ... will cause a hydration error'. Cosmetic/non-blocking but pollutes console; likely a lucide icon/span rendered inside a native <select><option> (digest hour/timezone or lead status select).", "selector": "select on /admin", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_marketing_toggle.py",
+    "/app/backend/tests/test_site_settings.py",
+    "/app/backend/tests/test_case_studies.py",
+    "/app/backend/tests/test_leads_and_seo.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Optional: remove the <span> inside <option> in an Admin.jsx native select to clear the React hydration console error.",
+    "Optional: add DELETE /api/leads/{id} (admin) so test/spam leads can be removed."
+  ],
+  "critical_code_review_comments": [
+    "ExitIntentOffer gating is correct: popupEnabled = settings?.marketing?.popup_enabled !== false && !offerEnded(...). Note the fail-open default - before /api/settings resolves the default SITE_DEFAULTS is used, so if the settings request fails the popup remains enabled; acceptable but worth a conscious decision.",
+    "SiteSettings.save() PUTs the whole settings object; concurrent admin edits could clobber each other. Fine for single-admin use.",
+    "Pre-existing test files contained stale admin password ('RajeevAdmin@2026', 'Rajeev@2026') and a stale canonical domain expectation (https://rajeevfreelancer.com vs current https://www.rajeevfreelancer.com) - fixed in test code only, no app changes."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_site_settings.py",
+    "/app/backend/tests/test_case_studies.py"
+  ],
+  "success_rate": {"backend": "100% (34/34)", "frontend": "100% of tested flows"},
+  "seed_data_creation": "Created TEST_ leads via API and one popup lead 'TEST_PopupLead_QA' (no delete endpoint available; harmless test rows in leads collection).",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "rajeev@rajeevfreelancer.com / Rajeev@2026!Admin (from /app/memory/test_credentials.md) - verified working via API and browser login",
+  "context_for_next_testing_agent": "Backend tests live in /app/backend/tests (run with REACT_APP_BACKEND_URL exported; pytest.ini pre-configured, xdist parallel). Admin login testid: admin-email/admin-password/admin-login-submit; site-settings panel is expanded by default so site-settings-toggle click is NOT needed (clicking it collapses). Exit popup can be forced by clearing sessionStorage 'rf_offer_seen' and dispatching document mouseout with clientY=0. Marketing settings were restored to defaults after testing.",
+  "rca_of_the_issue": "The earlier reported admin-login automation failure was not an application bug: login via the React form works (Welcome back toast + dashboard). Root cause of prior failure was test timing/navigation, plus stale hardcoded admin passwords in older backend test files causing 401s in 14 tests; both resolved by test-code corrections."
+}

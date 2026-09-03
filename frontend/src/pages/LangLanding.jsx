@@ -29,13 +29,22 @@ export default function LangLanding({ lang: propLang }) {
         <html lang={lang} dir={meta.dir} />
         <title>{t.seo_title}</title>
         <meta name="description" content={t.seo_desc} />
+        <meta name="robots" content="index, follow, max-image-preview:large" />
         <link rel="canonical" href={`${base}/${lang}`} />
         <link rel="alternate" hrefLang="en" href={`${base}/`} />
         {Object.keys(LANGS).map((l) => <link key={l} rel="alternate" hrefLang={l} href={`${base}/${l}`} />)}
         <link rel="alternate" hrefLang="x-default" href={`${base}/`} />
+        <meta property="og:site_name" content="Rajeev Freelancer" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`${base}/${lang}`} />
         <meta property="og:title" content={t.seo_title} />
         <meta property="og:description" content={t.seo_desc} />
         <meta property="og:locale" content={lang} />
+        <meta property="og:image" content="https://customer-assets-gfyr7b9c.emergentagent.net/job_rajeev-seo-hub/artifacts/whqtfhxo_image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={t.seo_title} />
+        <meta name="twitter:description" content={t.seo_desc} />
+        <meta name="twitter:image" content="https://customer-assets-gfyr7b9c.emergentagent.net/job_rajeev-seo-hub/artifacts/whqtfhxo_image.png" />
       </Helmet>
 
       {/* Simple localized top bar */}

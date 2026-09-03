@@ -339,3 +339,25 @@ Fixed all GSC indexing blockers reported by the user:
   (currently "*"); add RESEND_API_KEY to enable lead emails (blank = emails skipped gracefully);
   rotate JWT_SECRET/admin password if repo history was ever public; optional rate limiting on
   /api/auth/login and write endpoints.
+
+## SEO + Responsiveness Pass (2026-06)
+- Verified offer/marketing popup control panel lives in backend admin (Site settings →
+  "Launch offers & popup": offers_enabled, popup_enabled, offers_end_date). Stored in Mongo
+  settings key "site", served via GET /api/settings; ExitIntentOffer + OffersStrip respect it.
+  Testing agent: 34/34 backend tests pass; admin login + toggle + public gating verified.
+- SEO audit (already strong): per-route <title>/description/canonical (cleaned)/robots/hreflang/
+  OG/Twitter + JSON-LD (Organization, Person, WebSite, LocalBusiness, Service, FAQ, Breadcrumb)
+  via react-helmet-async Seo component on every route. robots.txt comprehensive (bots + AI
+  crawlers + sitemap). Dynamic /api/sitemap.xml lists all services/cities/blog/case-studies;
+  static /sitemap.xml is a sitemap index. All 21 <img> have alt.
+- IMPROVED: static public/index.html now ships default canonical + robots(max-image-preview) +
+  full Open Graph + Twitter card + apple-touch-icon + manifest link (so non-JS/social crawlers
+  get proper defaults before React/Helmet runs). Added public/manifest.json (PWA/mobile SEO).
+  Added og:image/robots/twitter to LangLanding (/hi /ar /es /fr).
+- Responsive: Nav has mobile hamburger (md:hidden) + full-screen menu; 368 responsive breakpoint
+  utilities; all containers max-w-[1400px] mx-auto with px-5 md:px-10 (no fixed-width overflow).
+- Production `yarn build` compiles clean (35s) with new meta baked in.
+- CAVEAT (honest): this is a CRA SPA — Googlebot renders JS so on-page SEO is complete, but the
+  ~1800 programmatic location pages fetch content client-side. For guaranteed crawler parity /
+  literal "100%" on those money pages, prerendering (react-snap) or SSR (Next.js) is the next
+  architectural step. Not done automatically (high risk on React 19 + framer-motion + lenis).

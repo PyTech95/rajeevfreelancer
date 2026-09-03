@@ -6,7 +6,7 @@ import requests
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/") or "https://project-baseline-1.preview.emergentagent.com"
 ADMIN_EMAIL = "rajeev@rajeevfreelancer.com"
-ADMIN_PASSWORD = "Rajeev@2026"
+ADMIN_PASSWORD = "Rajeev@2026!Admin"
 
 EXPECTED_CATEGORIES = {"SEO", "AI", "Web", "Marketing", "App"}
 

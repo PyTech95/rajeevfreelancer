@@ -7,7 +7,7 @@ import requests
 
 BASE_URL = os.environ["REACT_APP_BACKEND_URL"].rstrip("/")
 ADMIN_EMAIL = "rajeev@rajeevfreelancer.com"
-ADMIN_PASSWORD = "RajeevAdmin@2026"
+ADMIN_PASSWORD = "Rajeev@2026!Admin"
 
 
 @pytest.fixture(scope="module")
@@ -38,14 +38,14 @@ class TestPublicSettings:
         data = r.json()
         for k in ("seo", "contact", "social", "business"):
             assert k in data and isinstance(data[k], dict)
-        assert data["seo"]["canonical_domain"] == "https://rajeevfreelancer.com"
+        assert data["seo"]["canonical_domain"] == "https://www.rajeevfreelancer.com"
         assert "og_image" in data["seo"]
         assert "site_name" in data["seo"]
 
     def test_sitemap_uses_canonical_domain(self, api):
         r = api.get(f"{BASE_URL}/api/sitemap.xml")
         assert r.status_code == 200
-        assert "https://rajeevfreelancer.com/" in r.text
+        assert "https://www.rajeevfreelancer.com/" in r.text
         assert "<urlset" in r.text
 
 
@@ -86,7 +86,7 @@ class TestAdminSiteSettings:
         assert data["social"]["linkedin"] == new_linkedin
         assert data["social"]["github"] == new_github
         # Other fields should still exist (merge, not replace)
-        assert data["seo"]["canonical_domain"] == "https://rajeevfreelancer.com"
+        assert data["seo"]["canonical_domain"] == "https://www.rajeevfreelancer.com"
         assert data["contact"]["email"]
 
         # Verify persistence via public endpoint
