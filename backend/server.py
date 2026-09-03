@@ -733,7 +733,23 @@ async def ping_indexnow(paths: List[str]) -> int:
             logger.warning(f"IndexNow ping failed: {e}")
             return 0
 
-    return await asyncio.to_thread(_post)
+    status = await asyncio.to_thread(_post)
+    entry = {
+        "at": datetime.now(timezone.utc).isoformat(),
+        "count": len(payload["urlList"]),
+        "status": status,
+        "ok": status in (200, 202),
+        "urls": payload["urlList"][:5],
+    }
+    try:
+        await db.settings.update_one(
+            {"key": "indexnow"},
+            {"$set": {"last_ping": entry}, "$push": {"history": {"$each": [entry], "$slice": -15}}},
+            upsert=True,
+        )
+    except Exception as e:
+        logger.warning(f"IndexNow history record failed: {e}")
+    return status
 
 
 class IndexNowInput(BaseModel):
@@ -743,7 +759,10 @@ class IndexNowInput(BaseModel):
 
 @api_router.get("/admin/indexnow")
 async def get_indexnow(admin: dict = Depends(get_current_admin)):
-    return await _get_indexnow()
+    base = await _get_indexnow()
+    doc = await db.settings.find_one({"key": "indexnow"}, {"_id": 0}) or {}
+    history = list(reversed(doc.get("history", [])))
+    return {**base, "last_ping": doc.get("last_ping"), "history": history}
 
 
 @api_router.put("/admin/indexnow")

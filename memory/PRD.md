@@ -389,3 +389,14 @@ Fixed all GSC indexing blockers reported by the user:
   always-fresh dynamic sitemap (lastmod per URL) + Search Console submission. Communicated to user.
 - Next.js SSR rebuild: NOT done (mid-dev CRA->Next stack change unsupported / breaks deploy).
   Requires a fresh `farmnext` project. Advised user accordingly.
+
+## Iteration: IndexNow Status Panel (2026-06)
+- Backend: ping_indexnow now records {at,count,status,ok,urls} to settings key "indexnow" as
+  last_ping + capped history (last 15). GET /api/admin/indexnow returns last_ping + history
+  (newest first). Verified via curl (records 422 on preview as expected).
+- Frontend: SeoTools.jsx IndexNow panel now shows "Last notification sent" (Delivered/HTTP code
+  badge, URL count, relative time) + collapsible "Recent pings" history. data-testids:
+  indexnow-status, indexnow-last-result, indexnow-last-time, indexnow-history, indexnow-status-empty.
+  Toggle/submit preserve+refresh status. Compiles clean.
+- Next.js SSR rebuild: still NOT done in-place (would break CRA deploy). Recommend user open a NEW
+  project with the farmnext (Next.js) template; offered to port frontend + reuse this FastAPI backend there.

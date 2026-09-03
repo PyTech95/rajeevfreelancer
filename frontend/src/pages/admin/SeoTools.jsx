@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Radar, Share2, ChevronDown } from "lucide-react";
+import { Loader2, Radar, Share2, ChevronDown, Clock } from "lucide-react";
 import { api, formatApiErrorDetail } from "@/lib/api";
 import { SERVICES } from "@/data/site";
 import { getSiteConfig, canonicalBase } from "@/lib/siteConfig";
@@ -19,7 +19,7 @@ function useIndexNow() {
     setSaving(true);
     try {
       const { data } = await api.put("/admin/indexnow", { enabled: !state.enabled });
-      setState(data);
+      setState((prev) => ({ ...prev, ...data }));
       toast.success(data.enabled ? "IndexNow enabled" : "IndexNow disabled");
     } catch (err) {
       toast.error(formatApiErrorDetail(err.response?.data?.detail) || "Failed");
@@ -35,6 +35,10 @@ function useIndexNow() {
     try {
       const { data } = await api.post("/admin/indexnow/submit", { paths: list });
       toast.success(`Submitted ${data.submitted} URL(s) — IndexNow status ${data.status}`);
+      try {
+        const { data: fresh } = await api.get("/admin/indexnow");
+        setState(fresh);
+      } catch { /* keep prior state */ }
     } catch (err) {
       toast.error(formatApiErrorDetail(err.response?.data?.detail) || "Submit failed");
     } finally {
@@ -46,6 +50,18 @@ function useIndexNow() {
 }
 
 const field = "w-full rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15";
+
+function fmtTime(iso) {
+  if (!iso) return "—";
+  try {
+    const d = new Date(iso);
+    const diff = (Date.now() - d.getTime()) / 1000;
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return d.toLocaleString();
+  } catch { return iso; }
+}
 
 function SocialPreview() {
   const cfg = getSiteConfig();
@@ -166,6 +182,40 @@ export default function SeoTools() {
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />} Submit
               </button>
             </div>
+
+            {state?.last_ping ? (
+              <div data-testid="indexnow-status" className="mt-4 rounded-xl border border-line bg-paper/60 p-4">
+                <p className="flex items-center gap-2 text-xs font-mono uppercase tracking-wide text-muted-foreground"><Clock className="h-3.5 w-3.5" /> Last notification sent</p>
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                  <span data-testid="indexnow-last-result" className={`inline-flex items-center gap-1.5 font-medium ${state.last_ping.ok ? "text-green-600" : "text-amber-600"}`}>
+                    <span className={`h-2 w-2 rounded-full ${state.last_ping.ok ? "bg-green-500" : "bg-amber-500"}`} />
+                    {state.last_ping.ok ? "Delivered" : `HTTP ${state.last_ping.status || "error"}`}
+                  </span>
+                  <span className="text-ink/70">{state.last_ping.count} URL(s)</span>
+                  <span className="text-muted-foreground" data-testid="indexnow-last-time">{fmtTime(state.last_ping.at)}</span>
+                </div>
+                {!state.last_ping.ok && (
+                  <p className="mt-1.5 text-xs text-muted-foreground">A non-success code is expected on the preview URL — live pings verify only from your production domain after deploy.</p>
+                )}
+                {state.history?.length > 0 && (
+                  <details className="mt-3 group">
+                    <summary className="cursor-pointer select-none text-xs font-medium text-brand">Recent pings ({state.history.length})</summary>
+                    <ul className="mt-2 space-y-1.5 text-xs" data-testid="indexnow-history">
+                      {state.history.map((h, i) => (
+                        <li key={i} className="flex items-center gap-2">
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${h.ok ? "bg-green-500" : "bg-amber-500"}`} />
+                          <span className="shrink-0 tabular-nums text-muted-foreground">{fmtTime(h.at)}</span>
+                          <span className="shrink-0 text-ink/70">{h.count} URL · {h.ok ? "OK" : `HTTP ${h.status || "err"}`}</span>
+                          <span className="truncate text-ink/45">{(h.urls || []).join(", ")}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </div>
+            ) : (
+              <p data-testid="indexnow-status-empty" className="mt-4 text-xs text-muted-foreground">No notifications sent yet — publish or edit a city page, blog post or case study, or submit paths above, to see the delivery status here.</p>
+            )}
           </div>
 
           <div className="my-6 h-px bg-line" />
