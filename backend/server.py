@@ -848,7 +848,10 @@ async def admin_update_blog(post_id: str, payload: BlogInput, admin: dict = Depe
     res = await db.blog_posts.update_one({"id": post_id}, {"$set": update})
     if res.matched_count == 0:
         raise HTTPException(status_code=404, detail="Post not found")
-    return await db.blog_posts.find_one({"id": post_id}, {"_id": 0})
+    post = await db.blog_posts.find_one({"id": post_id}, {"_id": 0})
+    if post and post.get("published"):
+        asyncio.create_task(ping_indexnow([f"/blog/{post['slug']}"]))
+    return post
 
 
 @api_router.delete("/admin/blog/{post_id}")
@@ -950,7 +953,10 @@ async def admin_update_case_study(cs_id: str, payload: CaseStudyInput, admin: di
     res = await db.case_studies.update_one({"id": cs_id}, {"$set": update})
     if res.matched_count == 0:
         raise HTTPException(status_code=404, detail="Case study not found")
-    return await db.case_studies.find_one({"id": cs_id}, {"_id": 0})
+    item = await db.case_studies.find_one({"id": cs_id}, {"_id": 0})
+    if item and item.get("published"):
+        asyncio.create_task(ping_indexnow([f"/case-studies/{item['slug']}"]))
+    return item
 
 
 @api_router.delete("/admin/case-studies/{cs_id}")

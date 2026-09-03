@@ -378,3 +378,14 @@ Fixed all GSC indexing blockers reported by the user:
   rebuild as a NEW job (mid-dev stack change not supported). Communicated to user.
 - Known LOW/cosmetic (pre-existing, not blocking, not from these changes): (1) a "<span> cannot be
   a child of <option>" React console warning on /admin; (2) native date input for offers auto-off.
+
+## Iteration: Auto Sitemap Ping (2026-06)
+- Extended IndexNow auto-ping to fire on blog UPDATE and case-study UPDATE (previously only on
+  create). Full coverage now: location page generation, warmup, blog/case-study create+update,
+  admin manual submit. Verified firing via logs (preview returns 422 because the key file must be
+  hosted at the real canonical domain; resolves automatically post-deploy via GET /api/indexnow-key).
+- IndexNow notifies the shared network (Bing, Yandex, Seznam, Naver, Yep). Google does NOT
+  participate in IndexNow and removed its sitemap-ping endpoint (2023) -> Google is covered by the
+  always-fresh dynamic sitemap (lastmod per URL) + Search Console submission. Communicated to user.
+- Next.js SSR rebuild: NOT done (mid-dev CRA->Next stack change unsupported / breaks deploy).
+  Requires a fresh `farmnext` project. Advised user accordingly.
