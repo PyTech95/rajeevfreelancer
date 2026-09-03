@@ -877,6 +877,21 @@ async def admin_update_blog(post_id: str, payload: BlogInput, admin: dict = Depe
     return post
 
 
+@api_router.patch("/admin/blog/{post_id}/publish")
+async def admin_set_blog_published(post_id: str, body: dict, admin: dict = Depends(get_current_admin)):
+    published = bool(body.get("published", True))
+    res = await db.blog_posts.update_one(
+        {"id": post_id},
+        {"$set": {"published": published, "updated_at": datetime.now(timezone.utc).isoformat()}},
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Post not found")
+    post = await db.blog_posts.find_one({"id": post_id}, {"_id": 0})
+    if published:
+        asyncio.create_task(ping_indexnow([f"/blog/{post['slug']}"]))
+    return post
+
+
 @api_router.delete("/admin/blog/{post_id}")
 async def admin_delete_blog(post_id: str, admin: dict = Depends(get_current_admin)):
     res = await db.blog_posts.delete_one({"id": post_id})
@@ -1219,7 +1234,7 @@ def _blog_topics():
 
 async def _get_autopilot():
     default = {"enabled": False, "frequency_days": 7, "auto_publish": True,
-               "last_run": None, "generated_count": 0, "next_index": 0}
+               "last_run": None, "generated_count": 0, "next_index": 0, "custom_topics": []}
     doc = await db.settings.find_one({"key": "blog_autopilot"}, {"_id": 0}) or {}
     doc.pop("key", None)
     return {**default, **doc}
@@ -1288,17 +1303,26 @@ Total 900-1200 words. Natural keyword use, no stuffing, no markdown."""
 
 async def _autopilot_generate_once(auto_publish: bool) -> Optional[dict]:
     ap = await _get_autopilot()
+    customs = [t for t in (ap.get("custom_topics") or []) if str(t).strip()]
+    consumed_custom = None
     topics = _blog_topics()
-    start = ap.get("next_index", 0) % len(topics)
-    existing = set(await db.blog_posts.distinct("slug"))
-    chosen = topics[start]
-    idx = start
-    for i in range(len(topics)):
-        t = topics[(start + i) % len(topics)]
-        if t["slug_hint"] not in existing:
-            chosen = t
-            idx = (start + i) % len(topics)
-            break
+    if customs:
+        text = str(customs[0]).strip()
+        consumed_custom = customs[0]
+        chosen = {"service": text, "keyword": text, "angle": "an in-depth, expert deep-dive",
+                  "slug_hint": _slug(text) or f"post-{uuid.uuid4().hex[:6]}"}
+        idx = ap.get("next_index", 0)
+    else:
+        start = ap.get("next_index", 0) % len(topics)
+        existing = set(await db.blog_posts.distinct("slug"))
+        chosen = topics[start]
+        idx = start
+        for i in range(len(topics)):
+            t = topics[(start + i) % len(topics)]
+            if t["slug_hint"] not in existing:
+                chosen = t
+                idx = (start + i) % len(topics)
+                break
     post = await generate_blog_post(chosen)
     if not post:
         return None
@@ -1306,11 +1330,15 @@ async def _autopilot_generate_once(auto_publish: bool) -> Optional[dict]:
     await db.blog_posts.insert_one(dict(post))
     if post["published"]:
         asyncio.create_task(ping_indexnow([f"/blog/{post['slug']}"]))
-    await _save_autopilot({
+    patch = {
         "last_run": datetime.now(timezone.utc).isoformat(),
         "generated_count": ap.get("generated_count", 0) + 1,
-        "next_index": (idx + 1) % len(topics),
-    })
+    }
+    if consumed_custom is not None:
+        patch["custom_topics"] = [t for t in (ap.get("custom_topics") or []) if t != consumed_custom]
+    else:
+        patch["next_index"] = (idx + 1) % len(topics)
+    await _save_autopilot(patch)
     post.pop("_id", None)
     return post
 
@@ -1342,6 +1370,7 @@ class AutopilotInput(BaseModel):
     enabled: Optional[bool] = None
     frequency_days: Optional[int] = None
     auto_publish: Optional[bool] = None
+    custom_topics: Optional[List[str]] = None
 
 
 async def _reslug_content():
@@ -1358,15 +1387,20 @@ async def _reslug_content():
 
 
 def _autopilot_view(ap: dict) -> dict:
-    topics = _blog_topics()
-    nxt = topics[ap.get("next_index", 0) % len(topics)]
+    customs = [t for t in (ap.get("custom_topics") or []) if str(t).strip()]
+    if customs:
+        next_topic = customs[0]
+    else:
+        topics = _blog_topics()
+        nxt = topics[ap.get("next_index", 0) % len(topics)]
+        next_topic = f"{nxt['service']} — {nxt['angle']}"
     next_run = None
     if ap.get("enabled") and ap.get("last_run"):
         try:
             next_run = (datetime.fromisoformat(ap["last_run"]) + timedelta(days=max(1, int(ap["frequency_days"])))).isoformat()
         except Exception:
             next_run = None
-    return {**ap, "next_topic": f"{nxt['service']} — {nxt['angle']}", "next_run": next_run}
+    return {**ap, "next_topic": next_topic, "next_run": next_run, "custom_topics": customs}
 
 
 @api_router.get("/admin/blog-autopilot")
@@ -1379,6 +1413,14 @@ async def update_blog_autopilot(payload: AutopilotInput, admin: dict = Depends(g
     patch = {k: v for k, v in payload.model_dump().items() if v is not None}
     if "frequency_days" in patch:
         patch["frequency_days"] = max(1, min(90, int(patch["frequency_days"])))
+    if "custom_topics" in patch:
+        seen, cleaned = set(), []
+        for t in patch["custom_topics"]:
+            t = str(t).strip()
+            if t and t.lower() not in seen:
+                seen.add(t.lower())
+                cleaned.append(t)
+        patch["custom_topics"] = cleaned[:50]
     if patch:
         await _save_autopilot(patch)
     return _autopilot_view(await _get_autopilot())

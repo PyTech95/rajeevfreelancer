@@ -441,3 +441,16 @@ Fixed all GSC indexing blockers reported by the user:
   row doesn't blank after save; (4) fetchpriority -> fetchPriority (React DOM prop) on 4 hero imgs.
 - Known non-issue: "<span> in <option>" console warning on /admin is from an injected/preview
   script, NOT our code (all our <option> tags are plain text) — no SEO/functional impact.
+
+## Iteration: Autopilot custom topics + one-click publish (2026-06)
+- Custom topics: autopilot settings gained custom_topics[] (dedup/trim/cap 50). Generation uses the
+  first custom topic first, then removes it from the queue; falls back to the default 56-topic
+  rotation when empty. next_topic reflects the first custom topic. Admin UI: textarea
+  (autopilot-custom-topics) + Save ideas (autopilot-save-topics) in the Blog Autopilot panel.
+- Review-before-publish: existing auto_publish=off saves drafts; NEW one-click approve via
+  PATCH /api/admin/blog/{id}/publish + per-row Publish/Live toggle button (blog-publish-<slug>).
+  Publishing pings IndexNow.
+- Testing iteration_4: backend 68/68 (new test_autopilot_topics_and_publish.py, incl. real Gemini
+  gen), frontend 100%. Pre-existing LOW cosmetics only (injected-script <option> warning; native
+  date input) — non-issues.
+- Next.js SSR port: still requires a NEW farmnext project (handoff doc at memory/MIGRATION_TO_NEXTJS.md).

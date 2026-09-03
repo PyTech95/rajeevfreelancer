@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
-import { Loader2, Newspaper, ChevronDown, Plus, Trash2, Pencil, GripVertical, Sparkles, Zap } from "lucide-react";
+import { Loader2, Newspaper, ChevronDown, Plus, Trash2, Pencil, GripVertical, Sparkles, Zap, Check, Eye } from "lucide-react";
 import { api, formatApiErrorDetail } from "@/lib/api";
 import ImageUpload from "@/pages/admin/ImageUpload";
 
@@ -16,15 +16,30 @@ export default function BlogManager() {
   const [saving, setSaving] = useState(false);
   const [ap, setAp] = useState(null);
   const [running, setRunning] = useState(false);
+  const [topicsDraft, setTopicsDraft] = useState("");
   const dragIndex = useRef(null);
 
   const load = () => api.get("/admin/blog").then(({ data }) => setPosts(data.posts)).catch(() => {});
-  const loadAp = () => api.get("/admin/blog-autopilot").then(({ data }) => setAp(data)).catch(() => {});
+  const loadAp = () => api.get("/admin/blog-autopilot").then(({ data }) => { setAp(data); setTopicsDraft((data.custom_topics || []).join("\n")); }).catch(() => {});
   useEffect(() => { if (open) { load(); loadAp(); } }, [open]);
 
   const saveAp = async (patch) => {
     try { const { data } = await api.put("/admin/blog-autopilot", patch); setAp(data); toast.success("Autopilot updated"); }
     catch { toast.error("Could not update autopilot"); }
+  };
+  const saveTopics = async () => {
+    try {
+      const { data } = await api.put("/admin/blog-autopilot", { custom_topics: topicsDraft.split("\n") });
+      setAp(data); setTopicsDraft((data.custom_topics || []).join("\n"));
+      toast.success("Your topics saved — Autopilot will use these first");
+    } catch { toast.error("Could not save topics"); }
+  };
+  const togglePublish = async (p) => {
+    try {
+      await api.patch(`/admin/blog/${p.id}/publish`, { published: !p.published });
+      toast.success(!p.published ? "Approved & published — now live" : "Moved back to draft");
+      load();
+    } catch { toast.error("Could not update"); }
   };
   const runAp = async () => {
     setRunning(true);
@@ -118,6 +133,16 @@ export default function BlogManager() {
                       {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />} {running ? "Writing…" : "Generate a post now"}
                     </button>
                   </div>
+                  <div className="mt-4">
+                    <label className="flex flex-col gap-1 text-xs font-mono uppercase tracking-wide text-muted-foreground">
+                      Your topic ideas (one per line — used first, before the defaults)
+                      <textarea data-testid="autopilot-custom-topics" value={topicsDraft} onChange={(e) => setTopicsDraft(e.target.value)} onBlur={saveTopics} rows={3} placeholder={"e.g. Best CRM for freelancers in 2026\nWhatsApp automation for restaurants\nHow SEO pays for itself in 6 months"} className={`${field} font-sans`} />
+                    </label>
+                    <div className="mt-1 flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">{(ap.custom_topics || []).length} queued idea(s) — each is used once, then removed</span>
+                      <button data-testid="autopilot-save-topics" onClick={saveTopics} className="text-xs font-medium text-brand hover:underline">Save ideas</button>
+                    </div>
+                  </div>
                   <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground border-t border-brand/10 pt-3" data-testid="autopilot-status">
                     <span>Next topic: <span className="text-ink/70">{ap.next_topic}</span></span>
                     <span>Generated so far: <span className="text-ink/70">{ap.generated_count || 0}</span></span>
@@ -144,6 +169,9 @@ export default function BlogManager() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
+                      <button onClick={() => togglePublish(p)} data-testid={`blog-publish-${p.slug}`} title={p.published ? "Unpublish (move to draft)" : "Approve & publish"} className={`inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors ${p.published ? "border-green-500/40 text-green-700 hover:bg-green-50" : "border-amber-500/50 bg-amber-50 text-amber-700 hover:bg-amber-100"}`}>
+                        {p.published ? <><Eye className="h-3.5 w-3.5" /> Live</> : <><Check className="h-3.5 w-3.5" /> Publish</>}
+                      </button>
                       <button onClick={() => startEdit(p)} data-testid={`blog-edit-${p.slug}`} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line hover:border-ink"><Pencil className="h-4 w-4" /></button>
                       <button onClick={() => remove(p.id)} data-testid={`blog-delete-${p.slug}`} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line text-red-600 hover:border-red-500"><Trash2 className="h-4 w-4" /></button>
                     </div>

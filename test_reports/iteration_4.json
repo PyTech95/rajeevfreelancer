@@ -1,0 +1,30 @@
+{
+  "summary": "Iteration 4 e2e testing of Blog Autopilot custom-topic queue + one-click publish/unpublish. Backend: new suite test_autopilot_topics_and_publish.py (9 tests) plus full regression of the existing suite — 68/68 tests pass (includes one real Gemini generation). Frontend: Playwright on /admin verified topics textarea save/persist, Next-topic update, queued counter, publish/unpublish toggle per row (label + row status + toast), frequency-save regression, generate-now regression, and public homepage.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      { "screen": "Admin console (pre-existing, low)", "issues": ["React hydration console error '<span> cannot be a child of <option>' still logged on /admin (per main agent's note this comes from an injected preview script — ignored)", "'Auto-turn-off date' in Site settings still uses the browser-native date input instead of a shadcn calendar (pre-existing, low)"] }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_autopilot_topics_and_publish.py",
+    "/app/test_reports/pytest/iter4_all.xml",
+    "/app/scripts/iter4_cleanup.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "BlogManager.jsx: the topics textarea has onBlur=saveTopics AND the 'Save ideas' button calls saveTopics — clicking the button after typing fires two PUTs and two success toasts. Harmless/idempotent but consider guarding (skip save when draft is unchanged).",
+    "PATCH /api/admin/blog/{id}/publish takes a raw dict body instead of a Pydantic model; non-bool/absent 'published' silently defaults to True. Low risk since bool() coerces, but a small PublishInput model would be cleaner/validated.",
+    "Custom topics are consumed by value ([t for t in customs if t != consumed]); duplicates are deduped on save so this is safe today, but index-based removal would be more robust."
+  ],
+  "updated_files": ["/app/backend/tests/test_autopilot_topics_and_publish.py", "/app/scripts/iter4_cleanup.py"],
+  "success_rate": { "backend": "100% (68/68)", "frontend": "100% (all flows passed)" },
+  "seed_data_creation": "Temporary: TEST_ blog post for publish toggle + one LLM post from custom topic 'TEST_ Shopify speed optimisation checklist' + one UI generate-now post — ALL deleted. Post count back to 27. Autopilot restored to enabled=true, weekly, auto_publish=true, custom_topics=[].",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "rajeev@rajeevfreelancer.com / Rajeev@2026!Admin (from /app/memory/test_credentials.md)",
+  "context_for_next_testing_agent": "Verified this iteration: PUT/GET /api/admin/blog-autopilot custom_topics (trim/dedupe case-insensitive/cap 50/clear→rotation fallback), next_topic=first custom topic on both GET and PUT (iteration-3 bug 'PUT lacks next_topic/next_run' is FIXED), run endpoint consumes first custom topic (queue shrinks, title/body reflect topic, slug matches ^[a-z0-9-]+$, 8-12 paragraphs), PATCH /admin/blog/{id}/publish true/false with public /api/blog/{slug} 200/404 verification, 404 bad id, 401 unauth. UI: autopilot-custom-topics, autopilot-save-topics, blog-publish-<slug> all work. Note /api/admin/blog returns {\"posts\": [...]} (not a bare list). Real LLM generate takes ~25-60s; always delete generated posts and reset custom_topics after testing (see /app/scripts/iter4_cleanup.py).",
+  "rca_of_the_issue": "No defects found. The only initial test failure was my own assertion assuming /api/admin/blog returned a bare list; corrected in the test file."
+}
