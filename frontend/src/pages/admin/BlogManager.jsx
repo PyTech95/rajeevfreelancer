@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
-import { Loader2, Newspaper, ChevronDown, Plus, Trash2, Pencil, GripVertical } from "lucide-react";
+import { Loader2, Newspaper, ChevronDown, Plus, Trash2, Pencil, GripVertical, Sparkles, Zap } from "lucide-react";
 import { api, formatApiErrorDetail } from "@/lib/api";
 import ImageUpload from "@/pages/admin/ImageUpload";
 
@@ -14,10 +14,28 @@ export default function BlogManager() {
   const [editing, setEditing] = useState(null); // null=none, {}=new, {id}=edit
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [ap, setAp] = useState(null);
+  const [running, setRunning] = useState(false);
   const dragIndex = useRef(null);
 
   const load = () => api.get("/admin/blog").then(({ data }) => setPosts(data.posts)).catch(() => {});
-  useEffect(() => { if (open) load(); }, [open]);
+  const loadAp = () => api.get("/admin/blog-autopilot").then(({ data }) => setAp(data)).catch(() => {});
+  useEffect(() => { if (open) { load(); loadAp(); } }, [open]);
+
+  const saveAp = async (patch) => {
+    try { const { data } = await api.put("/admin/blog-autopilot", patch); setAp(data); toast.success("Autopilot updated"); }
+    catch { toast.error("Could not update autopilot"); }
+  };
+  const runAp = async () => {
+    setRunning(true);
+    try {
+      const { data } = await api.post("/admin/blog-autopilot/run");
+      toast.success(`Post created: ${data.title}`);
+      load(); loadAp();
+    } catch (err) {
+      toast.error(formatApiErrorDetail(err.response?.data?.detail) || "Generation failed — try again");
+    } finally { setRunning(false); }
+  };
 
   const reorder = async (from, to) => {
     if (from == null || from === to) return;
@@ -73,6 +91,41 @@ export default function BlogManager() {
         <div className="mt-6">
           {!editing ? (
             <>
+              {ap && (
+                <div data-testid="blog-autopilot" className="mb-6 rounded-xl border border-brand/20 bg-brand/[0.03] p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="flex items-center gap-2 font-heading font-bold text-sm"><Sparkles className="h-4 w-4 text-brand" /> Blog Autopilot — auto-draft SEO posts</p>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input data-testid="autopilot-enabled" type="checkbox" checked={!!ap.enabled} onChange={(e) => saveAp({ enabled: e.target.checked })} className="h-4 w-4 accent-[#0055FF]" />
+                      {ap.enabled ? "On" : "Off"}
+                    </label>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">Writes a fresh, keyword-targeted post automatically and pings search engines. Runs on the schedule below when On.</p>
+                  <div className="mt-4 flex flex-wrap items-end gap-4">
+                    <label className="flex flex-col gap-1 text-xs font-mono uppercase tracking-wide text-muted-foreground">
+                      Frequency
+                      <select data-testid="autopilot-frequency" value={ap.frequency_days} onChange={(e) => saveAp({ frequency_days: Number(e.target.value) })} className={`${field} w-40`}>
+                        <option value={7}>Weekly</option>
+                        <option value={14}>Every 2 weeks</option>
+                        <option value={30}>Monthly</option>
+                      </select>
+                    </label>
+                    <label className="flex items-center gap-2 text-sm pb-2">
+                      <input data-testid="autopilot-auto-publish" type="checkbox" checked={!!ap.auto_publish} onChange={(e) => saveAp({ auto_publish: e.target.checked })} className="h-4 w-4 accent-[#0055FF]" />
+                      Publish automatically (off = save as draft)
+                    </label>
+                    <button data-testid="autopilot-run" onClick={runAp} disabled={running} className="ml-auto inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-white hover:bg-brand transition-colors disabled:opacity-50">
+                      {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />} {running ? "Writing…" : "Generate a post now"}
+                    </button>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground border-t border-brand/10 pt-3" data-testid="autopilot-status">
+                    <span>Next topic: <span className="text-ink/70">{ap.next_topic}</span></span>
+                    <span>Generated so far: <span className="text-ink/70">{ap.generated_count || 0}</span></span>
+                    <span>Last run: <span className="text-ink/70">{ap.last_run ? new Date(ap.last_run).toLocaleString() : "never"}</span></span>
+                    {ap.enabled && ap.next_run && <span>Next scheduled: <span className="text-ink/70">{new Date(ap.next_run).toLocaleString()}</span></span>}
+                  </div>
+                </div>
+              )}
               <div className="flex justify-between items-center">
                 <p className="text-sm text-muted-foreground">{posts.length} post(s)</p>
                 <button data-testid="blog-new" onClick={startNew} className="inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-ink transition-colors"><Plus className="h-4 w-4" /> New post</button>

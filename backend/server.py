@@ -193,7 +193,11 @@ async def get_service_hub(service_slug: str):
 
 
 def _slug(text: str) -> str:
-    return text.lower().replace("&", "and").replace(".", "").replace("'", "").replace(" ", "-")
+    text = text.lower().replace("&", " and ")
+    text = re.sub(r"[^\w\s-]", "", text, flags=re.UNICODE)
+    text = re.sub(r"[\s_]+", "-", text)
+    text = re.sub(r"-+", "-", text)
+    return text.strip("-")
 
 
 # ---------------- AI content generation for location pages ----------------
@@ -1178,6 +1182,217 @@ async def geo(request: Request):
     return await asyncio.to_thread(fetch, ip)
 
 
+# --- Blog Autopilot: auto-draft SEO posts on a schedule -------------------------
+BLOG_COVERS = [
+    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+    "https://images.unsplash.com/photo-1499750310107-5fef28a66643?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+    "https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+    "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+    "https://images.unsplash.com/photo-1522071820081-009f0129c71c?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+    "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+    "https://images.unsplash.com/photo-1553877522-43269d4ea984?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+    "https://images.unsplash.com/photo-1432888622747-4eb9a8efeb07?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+]
+_BLOG_ANGLES = [
+    ("The complete 2026 guide", "guide"),
+    ("cost & pricing breakdown for 2026", "cost"),
+    ("a practical checklist for businesses", "checklist"),
+    ("common mistakes to avoid", "mistakes"),
+    ("freelancer vs agency — what's better", "vs-agency"),
+    ("how to measure real ROI", "roi"),
+    ("trends to watch in 2026", "trends"),
+]
+
+
+def _blog_topics():
+    out = []
+    for s in SERVICES:
+        for label, key in _BLOG_ANGLES:
+            out.append({
+                "service": s["name"],
+                "keyword": s.get("keyword", s["name"]),
+                "angle": label,
+                "slug_hint": f"{s['slug']}-{key}",
+            })
+    return out
+
+
+async def _get_autopilot():
+    default = {"enabled": False, "frequency_days": 7, "auto_publish": True,
+               "last_run": None, "generated_count": 0, "next_index": 0}
+    doc = await db.settings.find_one({"key": "blog_autopilot"}, {"_id": 0}) or {}
+    doc.pop("key", None)
+    return {**default, **doc}
+
+
+async def _save_autopilot(patch: dict):
+    await db.settings.update_one({"key": "blog_autopilot"}, {"$set": patch}, upsert=True)
+
+
+async def generate_blog_post(topic: dict) -> Optional[dict]:
+    """Generate one SEO blog post via the LLM. Returns an insert-ready doc or None on failure."""
+    prompt = f"""Write a high-quality, original SEO blog post for Rajeev Freelancer about: "{topic['service']} — {topic['angle']}".
+Primary keyword: "{topic['keyword']}". Audience: SMB owners, founders and marketing leads worldwide.
+Return ONLY minified JSON with EXACTLY these keys:
+{{
+ "title": "compelling SEO title/H1 <=65 chars including the primary keyword naturally",
+ "excerpt": "meta description 150-158 chars with the keyword + a clear benefit",
+ "category": "one of: SEO, Web Development, AI Automation, Digital Marketing, WhatsApp Marketing, Guide",
+ "tags": ["3-6 short lowercase tags"],
+ "body": ["8 to 12 paragraphs of genuinely useful, specific, non-generic content with concrete examples, numbers and actionable steps; start with a hook intro and end with a short CTA to book a free consultation or message Rajeev on WhatsApp"]
+}}
+Total 900-1200 words. Natural keyword use, no stuffing, no markdown."""
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        chat = LlmChat(
+            api_key=os.environ["EMERGENT_LLM_KEY"],
+            session_id=f"blog-{topic['slug_hint']}",
+            system_message=CONTENT_SYSTEM,
+        ).with_model("gemini", "gemini-3-flash-preview")
+        async with _llm_gate:
+            resp = await chat.send_message(UserMessage(text=prompt))
+        text = resp if isinstance(resp, str) else str(resp)
+        text = re.sub(r"^```(json)?|```$", "", text.strip(), flags=re.MULTILINE).strip()
+        m = re.search(r"\{.*\}", text, re.DOTALL)
+        data = json.loads(m.group(0) if m else text)
+        for k in ("title", "excerpt", "category", "body"):
+            if not data.get(k):
+                raise ValueError(f"missing {k}")
+        body = data["body"] if isinstance(data["body"], list) else [str(data["body"])]
+        title = str(data["title"]).strip()
+        slug = _slug(title)
+        if await db.blog_posts.find_one({"slug": slug}):
+            slug = topic["slug_hint"]
+        if await db.blog_posts.find_one({"slug": slug}):
+            slug = f"{topic['slug_hint']}-{uuid.uuid4().hex[:6]}"
+        now = datetime.now(timezone.utc).isoformat()
+        return {
+            "id": str(uuid.uuid4()),
+            "title": title,
+            "slug": slug,
+            "category": str(data.get("category") or "Guide"),
+            "excerpt": str(data["excerpt"]).strip(),
+            "cover_image": BLOG_COVERS[abs(hash(slug)) % len(BLOG_COVERS)],
+            "tags": [str(t).lower() for t in (data.get("tags") or [])][:6],
+            "body": [str(p) for p in body],
+            "featured": False,
+            "order": 50,
+            "ai_generated": True,
+            "created_at": now,
+            "updated_at": now,
+        }
+    except Exception as e:
+        logger.warning(f"Blog autopilot generation failed: {e}")
+        return None
+
+
+async def _autopilot_generate_once(auto_publish: bool) -> Optional[dict]:
+    ap = await _get_autopilot()
+    topics = _blog_topics()
+    start = ap.get("next_index", 0) % len(topics)
+    existing = set(await db.blog_posts.distinct("slug"))
+    chosen = topics[start]
+    idx = start
+    for i in range(len(topics)):
+        t = topics[(start + i) % len(topics)]
+        if t["slug_hint"] not in existing:
+            chosen = t
+            idx = (start + i) % len(topics)
+            break
+    post = await generate_blog_post(chosen)
+    if not post:
+        return None
+    post["published"] = bool(auto_publish)
+    await db.blog_posts.insert_one(dict(post))
+    if post["published"]:
+        asyncio.create_task(ping_indexnow([f"/blog/{post['slug']}"]))
+    await _save_autopilot({
+        "last_run": datetime.now(timezone.utc).isoformat(),
+        "generated_count": ap.get("generated_count", 0) + 1,
+        "next_index": (idx + 1) % len(topics),
+    })
+    post.pop("_id", None)
+    return post
+
+
+async def _blog_autopilot_scheduler():
+    """Generate a fresh SEO blog post every `frequency_days` when enabled."""
+    await asyncio.sleep(20)
+    while True:
+        try:
+            ap = await _get_autopilot()
+            if ap["enabled"]:
+                last = ap.get("last_run")
+                due = True
+                if last:
+                    try:
+                        due = (datetime.now(timezone.utc) - datetime.fromisoformat(last)) >= timedelta(days=max(1, int(ap["frequency_days"])))
+                    except Exception:
+                        due = True
+                if due:
+                    post = await _autopilot_generate_once(ap["auto_publish"])
+                    if post:
+                        logger.info(f"Blog autopilot published: {post['slug']}")
+        except Exception as e:
+            logger.error(f"Blog autopilot scheduler error: {e}")
+        await asyncio.sleep(3600)
+
+
+class AutopilotInput(BaseModel):
+    enabled: Optional[bool] = None
+    frequency_days: Optional[int] = None
+    auto_publish: Optional[bool] = None
+
+
+async def _reslug_content():
+    """One-time: clean any legacy slug with characters outside [a-z0-9-]."""
+    for coll in ("blog_posts", "case_studies"):
+        async for doc in db[coll].find({}, {"id": 1, "slug": 1, "title": 1}):
+            slug = doc.get("slug") or ""
+            clean = _slug(slug) if slug else _slug(doc.get("title", ""))
+            if clean and clean != slug:
+                if await db[coll].find_one({"slug": clean, "id": {"$ne": doc.get("id")}}):
+                    clean = f"{clean}-{str(doc.get('id',''))[:6]}"
+                await db[coll].update_one({"id": doc.get("id")}, {"$set": {"slug": clean}})
+                logger.info(f"Re-slugged {coll}: {slug} -> {clean}")
+
+
+def _autopilot_view(ap: dict) -> dict:
+    topics = _blog_topics()
+    nxt = topics[ap.get("next_index", 0) % len(topics)]
+    next_run = None
+    if ap.get("enabled") and ap.get("last_run"):
+        try:
+            next_run = (datetime.fromisoformat(ap["last_run"]) + timedelta(days=max(1, int(ap["frequency_days"])))).isoformat()
+        except Exception:
+            next_run = None
+    return {**ap, "next_topic": f"{nxt['service']} — {nxt['angle']}", "next_run": next_run}
+
+
+@api_router.get("/admin/blog-autopilot")
+async def get_blog_autopilot(admin: dict = Depends(get_current_admin)):
+    return _autopilot_view(await _get_autopilot())
+
+
+@api_router.put("/admin/blog-autopilot")
+async def update_blog_autopilot(payload: AutopilotInput, admin: dict = Depends(get_current_admin)):
+    patch = {k: v for k, v in payload.model_dump().items() if v is not None}
+    if "frequency_days" in patch:
+        patch["frequency_days"] = max(1, min(90, int(patch["frequency_days"])))
+    if patch:
+        await _save_autopilot(patch)
+    return _autopilot_view(await _get_autopilot())
+
+
+@api_router.post("/admin/blog-autopilot/run")
+async def run_blog_autopilot(admin: dict = Depends(get_current_admin)):
+    ap = await _get_autopilot()
+    post = await _autopilot_generate_once(ap["auto_publish"])
+    if not post:
+        raise HTTPException(status_code=502, detail="Generation failed — please try again")
+    return post
+
+
 app.include_router(api_router)
 
 app.add_middleware(
@@ -1210,8 +1425,10 @@ async def startup():
         await db.users.update_one({"email": admin_email}, {"$set": {"password_hash": hash_password(admin_password)}})
         logger.info("Updated admin password")
     asyncio.create_task(_daily_digest_scheduler())
+    asyncio.create_task(_blog_autopilot_scheduler())
     await _seed_blog()
     await _seed_case_studies()
+    await _reslug_content()
     try:
         await asyncio.to_thread(init_storage)
         logger.info("Object storage initialized")

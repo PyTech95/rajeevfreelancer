@@ -4,7 +4,8 @@ import uuid
 import pytest
 import requests
 
-BASE_URL = os.environ["REACT_APP_BACKEND_URL"].rstrip("/")
+from dotenv import dotenv_values as _dv
+BASE_URL = (os.environ.get("REACT_APP_BACKEND_URL") or _dv("/app/frontend/.env")["REACT_APP_BACKEND_URL"]).rstrip("/")
 ADMIN_EMAIL = "rajeev@rajeevfreelancer.com"
 ADMIN_PASSWORD = "Rajeev@2026!Admin"
 

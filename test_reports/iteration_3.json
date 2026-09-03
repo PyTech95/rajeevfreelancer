@@ -1,0 +1,50 @@
+{
+  "summary": "Tested Blog Autopilot end-to-end (backend API + admin UI) plus regressions. 49 backend assertions across 6 pytest files: 47 passed, 2 failed and both are the SAME data defect (one legacy AI post left in DB with a dirty slug containing ':' and a curly apostrophe). New autopilot generation is correct: real Gemini call (~1-2 min budget, actual ~90s and ~35s runs), clean [a-z0-9-] slug, 8-12 body paragraphs, title/excerpt/category/tags, ai_generated=true, published and publicly fetchable at GET /api/blog/<slug> (200). GET/PUT settings persist (incl. clamping 0->1, 5000->90, partial updates don't clear other fields) and require admin JWT (401 without). Admin UI verified: Blog & insights panel -> Blog Autopilot box, enable toggle + frequency persist across reload with 'Autopilot updated' toast, 'Generate a post now' shows 'Writing…' disabled state then success toast with post title, post count 25 -> 26, status row updates (generated_count 3->4, last run, next scheduled). Public homepage and generated post page render cleanly (no webpack overlay, 12 paragraphs, cover image). Regressions passed: lead delete, seo.google_verification save, marketing.popup_enabled persistence, case studies CRUD.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "DB data / GET /api/blog", "issue": "Legacy AI post still has a dirty slug: 'why-you-need-a-freelance-ai-consultant-in-2026:-a-leader’s-guide' (colon + U+2019). It was created before the _slug() fix, so the fix is correct but old data was not migrated — the public URL is ugly/encoded and would be a bad canonical/sitemap entry. Recommend a one-time re-slug migration (or delete that post)."},
+      {"endpoint": "PUT /api/admin/blog-autopilot", "issue": "Response returns _get_autopilot() only — omits next_topic and next_run (unlike GET). The admin status row therefore blanks out 'Next topic'/'Next scheduled' immediately after saving until reload (reproduced in UI screenshot). Return the same enriched payload as GET."},
+      {"endpoint": "_slug()", "issue": "Uses re.sub(r'[^\\w\\s-]', ..., flags=re.UNICODE), so non-ASCII word chars (accents, Devanagari) survive into slugs. Consider unicodedata NFKD + ASCII fold, and add an explicit slug re-check/regex guard before insert in generate_blog_post()."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Autopilot save (enable/frequency/auto-publish)", "issue": "After a successful save the status row loses 'Next topic' and 'Next scheduled' values (backend PUT response lacks those keys); values return after page reload", "affected_selectors": ["[data-testid=\"autopilot-status\"]"]}
+    ],
+    "design_issues": [
+      {"screen": "Console warnings (app-wide)", "issues": ["React hydration error: '<span> cannot be a child of <option>' logged on /admin — some select renders an element inside <option>", "Invalid DOM property warning: fetchpriority should be fetchPriority (BlogPost.jsx:72, ServiceHub.jsx:86, CaseStudyDetail.jsx:213, About.jsx:62)"]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_blog_autopilot.py",
+    "/app/backend/tests/test_blog_autopilot_posts.py",
+    "/app/test_reports/pytest/pytest_results.xml",
+    "/app/test_reports/pytest/autopilot.xml"
+  ],
+  "action_items": [
+    "Migrate/clean the one legacy post slug containing ':' and '’' (re-slug via _slug or delete)",
+    "Make PUT /api/admin/blog-autopilot return next_topic/next_run like GET so the admin status row stays populated after save",
+    "Fix fetchpriority -> fetchPriority in 4 JSX files and the <span> inside <option> hydration warning"
+  ],
+  "critical_code_review_comments": [
+    "generate_blog_post() has no post-validation on paragraph count/word count — a bad LLM response could insert a 2-paragraph 'post'. Consider validating len(body) >= 6 before insert.",
+    "server.py is 1425 lines; blog autopilot + LLM helpers should move to their own module.",
+    "_autopilot_generate_once dedupes on slug_hint only; if the LLM title-slug already exists it silently falls back to slug_hint + uuid — acceptable, but next_index advances even on duplicate topics."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_blog_autopilot.py (new)",
+    "/app/backend/tests/test_blog_autopilot_posts.py (new)",
+    "/app/backend/tests/test_case_studies.py (fixed stale hardcoded BASE_URL fallback -> reads /app/frontend/.env; was causing 9 false 404 failures)",
+    "/app/backend/tests/test_marketing_toggle.py (BASE_URL now falls back to /app/frontend/.env)",
+    "/app/backend/tests/test_site_settings.py (BASE_URL now falls back to /app/frontend/.env)"
+  ],
+  "success_rate": {"backend": "96% (47/49)", "frontend": "100% of tested flows"},
+  "seed_data_creation": "2 real AI posts generated during testing; deleted 1 (hiring-a-freelance-ai-consultant-the-ultimate-business-checklist). Kept 'how-to-hire-a-freelance-ai-consultant-7-mistakes-to-avoid' (published). Autopilot restored to enabled=true, frequency_days=7, auto_publish=true (generated_count=4). marketing={offers_enabled:true,popup_enabled:true,offers_end_date:''} and seo.google_verification='' verified restored.",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "Admin rajeev@rajeevfreelancer.com / Rajeev@2026!Admin (login returns {token, user}; note key is 'token', not 'access_token')",
+  "context_for_next_testing_agent": "Run `pytest tests/ -k 'not test_run_generates_valid_post'` for fast regression; the excluded test makes a real Gemini call and creates a real blog post (delete it after). Public post fetch is wrapped: GET /api/blog/<slug> -> {post, related}. Autopilot generate-now took ~35-90s. Only known failure is the legacy dirty-slug post assertion in TestExistingSlugs/test_generated_posts_public_and_clean.",
+  "rca_of_the_issue": "Dirty slug: _slug() strips punctuation correctly now, but the offending post was generated before the fix and stored in MongoDB; no migration was run, so GET /api/blog still lists the colon slug. Status-row blanking: PUT handler returns _get_autopilot() (raw settings) while the frontend replaces its whole autopilot state with the PUT response, which has no next_topic/next_run keys."
+}

@@ -59,7 +59,7 @@ export default function About() {
 
       <section className="mx-auto max-w-[1400px] px-5 md:px-10 pb-20 grid lg:grid-cols-12 gap-10 items-start">
         <Reveal className="lg:col-span-5">
-          <img src={ABOUT_IMG} alt="Rajeev, senior freelance engineer and consultant" decoding="async" fetchpriority="high" className="w-full rounded-2xl border border-line object-cover aspect-[4/5]" />
+          <img src={ABOUT_IMG} alt="Rajeev, senior freelance engineer and consultant" decoding="async" fetchPriority="high" className="w-full rounded-2xl border border-line object-cover aspect-[4/5]" />
         </Reveal>
         <Reveal delay={0.1} className="lg:col-span-7">
           <p className="text-xl md:text-2xl font-heading tracking-tight leading-snug">

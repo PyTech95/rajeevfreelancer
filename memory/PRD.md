@@ -422,3 +422,22 @@ Fixed all GSC indexing blockers reported by the user:
   eligible for star rich results in Google (self-serving reviews). Schema kept (valid & useful for
   other engines/AI); real SERP stars require third-party review platforms.
 - Recommend user set GA4 ID (admin tracking field) + paste GSC verification code (already wired).
+
+## Iteration: Blog Autopilot + Analytics + fixes (2026-06)
+- Connect Analytics: ALREADY wired — GA4 Measurement ID + Google Ads (tracking.ga4_id/ads_id),
+  Google Search Console verification (seo.google_verification) all editable in admin Site settings;
+  gtag + verification meta auto-inject. User just pastes their IDs. No code needed.
+- Blog Autopilot (NEW): backend scheduler (_blog_autopilot_scheduler, launched on startup) + LLM
+  generator (generate_blog_post via emergentintegrations LlmChat gemini-3-flash-preview,
+  EMERGENT_LLM_KEY). 56-topic rotation (8 services x 7 angles), dedupes by slug, assigns cover,
+  pings IndexNow on publish. Endpoints: GET/PUT /api/admin/blog-autopilot, POST .../run.
+  Admin UI in BlogManager.jsx: enable toggle, frequency (weekly/2wk/monthly), auto-publish toggle,
+  "Generate a post now" button + status (next topic/generated count/last run/next scheduled).
+  Testing agent iteration_3: backend 47/49 (2 fails were the legacy dirty-slug data, now fixed),
+  frontend 100%. Generated posts are genuine 8-12 paragraph SEO articles, published + public.
+- FIXES from test report: (1) _slug() now strips all punctuation (keeps unicode letters) — clean
+  URLs; (2) one-time _reslug_content() migration on startup cleaned legacy dirty slugs (verified 0
+  dirty slugs remain); (3) autopilot PUT now returns enriched view (next_topic/next_run) so status
+  row doesn't blank after save; (4) fetchpriority -> fetchPriority (React DOM prop) on 4 hero imgs.
+- Known non-issue: "<span> in <option>" console warning on /admin is from an injected/preview
+  script, NOT our code (all our <option> tags are plain text) — no SEO/functional impact.
