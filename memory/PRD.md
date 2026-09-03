@@ -400,3 +400,11 @@ Fixed all GSC indexing blockers reported by the user:
   Toggle/submit preserve+refresh status. Compiles clean.
 - Next.js SSR rebuild: still NOT done in-place (would break CRA deploy). Recommend user open a NEW
   project with the farmnext (Next.js) template; offered to port frontend + reuse this FastAPI backend there.
+
+## Iteration: Next.js handoff + Crawler SEO guidance (2026-06)
+- No app code changed. Next.js SSR requires a NEW Emergent project (farmnext template; permanent
+  per job). Provided authoritative platform steps + created /app/memory/MIGRATION_TO_NEXTJS.md
+  (full route map, all /api endpoints, SSR/ISR strategy, env vars, SEO parity checklist, DB-reuse
+  options) to upload/reference in the new Next.js job for porting the frontend + reusing this backend.
+- Crawler SEO confirmation remains a post-deploy manual check (Domain tab crawling toggle ON +
+  GSC URL Inspection on a city page).
