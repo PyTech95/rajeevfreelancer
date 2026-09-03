@@ -27,6 +27,7 @@ export default function Seo({ title, description, path = "/", image, jsonLd, noi
       <meta name="description" content={seoDesc} />
       <meta name="robots" content={robots} />
       <link rel="canonical" href={canonical} />
+      {cfg.seo.google_verification ? <meta name="google-site-verification" content={cfg.seo.google_verification} /> : null}
 
       {alts &&
         alts.map((a) => (

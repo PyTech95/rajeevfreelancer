@@ -361,3 +361,20 @@ Fixed all GSC indexing blockers reported by the user:
   ~1800 programmatic location pages fetch content client-side. For guaranteed crawler parity /
   literal "100%" on those money pages, prerendering (react-snap) or SSR (Next.js) is the next
   architectural step. Not done automatically (high risk on React 19 + framer-motion + lenis).
+
+## Iteration: Lead delete + Search Console + Prerender findings (2026-06)
+- ADDED DELETE /api/leads/{id} (admin JWT) + admin UI trash button per lead row (removeLead,
+  window.confirm, optimistic remove). Testing: 41/41 backend pass, frontend flow verified.
+- ADDED Google Search Console verification: seo.google_verification field in DEFAULT_SITE +
+  admin Site Settings ("SEO defaults" group, data-testid settings-seo-google_verification);
+  Seo.jsx emits <meta name="google-site-verification"> when set. Verified persists + renders.
+- PRERENDER/SSR (items 1 & 2) — DECISION: NOT implemented in code. Confirmed with platform
+  support: Emergent serves CRA builds via Cloudflare with a blanket SPA fallback (all non-/api
+  routes -> root index.html), so custom build-time prerender (react-snap/puppeteer) is DISCARDED
+  and cannot work. Emergent instead provides a BUILT-IN Cloudflare crawler-prerender layer
+  ("Enable Search Engine Crawling and Optimisation" toggle in Domain tab, ON by default) that
+  serves fully-rendered HTML (incl. the 1,800 client-fetched location pages) to Googlebot/Bingbot,
+  cached 30 days. For guaranteed always-on SSR, the only true route is a Next.js `farmnext`
+  rebuild as a NEW job (mid-dev stack change not supported). Communicated to user.
+- Known LOW/cosmetic (pre-existing, not blocking, not from these changes): (1) a "<span> cannot be
+  a child of <option>" React console warning on /admin; (2) native date input for offers auto-off.

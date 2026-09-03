@@ -1,0 +1,42 @@
+{
+  "summary": "Tested the two new additive features (admin lead delete + Google Search Console verification meta) plus regressions. Backend: 41/41 pytest tests pass including a new suite /app/backend/tests/test_lead_delete_and_gsc.py (DELETE /api/leads/{id} -> {ok:true}, 404 for unknown id, 404 on double delete, 401 without admin JWT, removal verified via GET /api/leads; seo.google_verification present in GET /api/settings, persists after PUT /api/admin/settings/site and restores to ''). Frontend: admin login at /admin works, Leads Dashboard + expanded site-settings panel render, per-row delete button data-testid lead-delete-<id> found for an API-created lead, window.confirm ('Delete this lead permanently? This cannot be undone.') accepted, row disappeared and lead gone from API. settings-seo-google_verification field accepted 'test-gsc-verify-123', site-settings-save showed 'Site settings saved' toast, GET /api/settings returned the value, and the public homepage DOM head contained <meta name=\"google-site-verification\" content=\"test-gsc-verify-123\">. Homepage renders with no 'Compiled with problems' overlay and no webpack overlay iframe; marketing.popup_enabled toggle persistence verified by backend test. DB left in default state: seo.google_verification reset to '', marketing reset to {offers_enabled:true, popup_enabled:true, offers_end_date:''}, and all 17 stale TEST_ leads deleted via the new endpoint (0 TEST_ leads remaining).",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Admin dashboard native <select>", "issue": "Pre-existing React console error persists on /admin: 'In HTML, <span> cannot be a child of <option> ... will cause a hydration error'. Cosmetic only.", "selector": "select on /admin", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin > Site settings > Launch offers & popup", "issues": ["'Auto-turn-off date' uses the browser-native date input (mm/dd/yyyy) rather than a shadcn Calendar/date-picker component - inconsistent with the rest of the UI (pre-existing, low priority)"]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_lead_delete_and_gsc.py",
+    "/app/backend/tests/test_leads_and_seo.py",
+    "/app/backend/tests/test_site_settings.py",
+    "/app/backend/tests/test_marketing_toggle.py",
+    "/app/backend/tests/test_case_studies.py",
+    "/app/tests/cleanup_qa.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Optional/low: remove the <span> rendered inside a native <option> in Admin.jsx to clear the React hydration console error.",
+    "Optional/low: replace the native date input for 'Auto-turn-off date' with the shadcn calendar component."
+  ],
+  "critical_code_review_comments": [
+    "DELETE /api/leads/{lead_id} is correctly admin-guarded and returns 404 when deleted_count == 0 - no soft-delete/audit trail, so deletion is irreversible; acceptable for spam cleanup but consider archiving if lead history matters.",
+    "SiteSettings.save() still PUTs the entire settings document (including seo.google_verification); concurrent admin edits can clobber each other. Fine for single-admin use.",
+    "Seo.jsx conditionally emits the google-site-verification meta only when non-empty - correct; note the tag is client-rendered, so verification relies on Emergent's crawler-prerender layer for Googlebot HTML-tag verification (DNS/HTML-file method may be safer if GSC verification fails)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_lead_delete_and_gsc.py",
+    "/app/tests/cleanup_qa.py"
+  ],
+  "success_rate": {"backend": "100% (41/41)", "frontend": "100% of tested flows"},
+  "seed_data_creation": "Created 3 TEST_ leads via POST /api/leads for delete tests plus 1 for the UI delete flow; all removed. Also purged 17 pre-existing TEST_ leads from earlier iterations.",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "rajeev@rajeevfreelancer.com / Rajeev@2026!Admin (from /app/memory/test_credentials.md) - verified via API and browser login",
+  "context_for_next_testing_agent": "Run backend tests with REACT_APP_BACKEND_URL exported (test_site_settings.py/test_marketing_toggle.py read os.environ directly and error at import without it): 'cd /app/backend && export REACT_APP_BACKEND_URL=<url> && python -m pytest tests/ -v'. Site settings are saved via PUT /api/admin/settings/site (not PUT /api/settings, which is GET-only -> 405). site-settings panel is expanded by default. Use page.on('dialog', d.accept()) for lead delete. /app/tests/cleanup_qa.py resets settings and purges TEST_ leads.",
+  "rca_of_the_issue": "No application defects found this iteration. Two initial test failures were test-side: my suite used PUT /api/settings (405 - correct route is PUT /api/admin/settings/site) and the legacy case-study/site-settings suites require REACT_APP_BACKEND_URL in the process env; both corrected in test code only."
+}

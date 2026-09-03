@@ -15,6 +15,7 @@ const GROUPS = [
       { name: "og_image", label: "OG / share image URL" },
       { name: "canonical_domain", label: "Canonical domain (https://…)" },
       { name: "twitter_handle", label: "Twitter/X handle (@…)" },
+      { name: "google_verification", label: "Google Search Console verification code (content value only)" },
       { name: "robots_index", label: "Allow search engines to index", bool: true },
     ],
   },

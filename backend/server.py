@@ -445,6 +445,14 @@ async def update_lead(lead_id: str, body: dict, admin: dict = Depends(get_curren
     return {"ok": True}
 
 
+@api_router.delete("/leads/{lead_id}")
+async def delete_lead(lead_id: str, admin: dict = Depends(get_current_admin)):
+    res = await db.leads.delete_one({"id": lead_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return {"ok": True}
+
+
 @api_router.get("/admin/stats")
 async def admin_stats(admin: dict = Depends(get_current_admin)):
     total = await db.leads.count_documents({})
@@ -606,6 +614,7 @@ DEFAULT_SITE = {
         "canonical_domain": "https://www.rajeevfreelancer.com",
         "twitter_handle": "@rajeevfreelancer",
         "robots_index": True,
+        "google_verification": "",
         "default_locale": "en",
         "locales": ["en", "hi", "ar"],
     },

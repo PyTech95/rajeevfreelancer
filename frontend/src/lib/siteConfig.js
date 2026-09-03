@@ -12,6 +12,7 @@ export const SITE_DEFAULTS = {
     canonical_domain: "https://www.rajeevfreelancer.com",
     twitter_handle: "@rajeevfreelancer",
     robots_index: true,
+    google_verification: "",
     default_locale: "en",
     locales: ["en", "hi", "ar"],
   },

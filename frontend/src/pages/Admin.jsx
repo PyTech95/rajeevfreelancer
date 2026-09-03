@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, LogOut, Lock, Users, TrendingUp, Trophy, FileText, Download, Sparkles, Globe, Mail } from "lucide-react";
+import { Loader2, LogOut, Lock, Users, TrendingUp, Trophy, FileText, Download, Sparkles, Globe, Mail, Trash2 } from "lucide-react";
 import Seo from "@/components/Seo";
 import { useAuth } from "@/context/AuthContext";
 import { api, formatApiErrorDetail } from "@/lib/api";
@@ -133,6 +133,16 @@ function Dashboard() {
     } catch { toast.error("Update failed"); }
   };
 
+  const removeLead = async (id) => {
+    if (!window.confirm("Delete this lead permanently? This cannot be undone.")) return;
+    try {
+      await api.delete(`/leads/${id}`);
+      setLeads((ls) => ls.filter((l) => l.id !== id));
+      toast.success("Lead deleted");
+      load();
+    } catch { toast.error("Delete failed"); }
+  };
+
   const exportCsv = () => {
     const headers = ["Name", "Email", "Phone", "Service", "Budget", "Location", "Status", "Source", "Message", "Created"];
     const esc = (c) => `"${String(c ?? "").replace(/"/g, '""')}"`;
@@ -246,7 +256,7 @@ function Dashboard() {
               <table className="w-full text-sm" data-testid="leads-table">
                 <thead className="bg-paper text-left font-mono text-xs uppercase tracking-wide text-muted-foreground">
                   <tr>
-                    <th className="px-6 py-3">Name</th><th className="px-6 py-3">Contact</th><th className="px-6 py-3">Service</th><th className="px-6 py-3">Location</th><th className="px-6 py-3">Budget</th><th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3">Name</th><th className="px-6 py-3">Contact</th><th className="px-6 py-3">Service</th><th className="px-6 py-3">Location</th><th className="px-6 py-3">Budget</th><th className="px-6 py-3">Status</th><th className="px-6 py-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -265,6 +275,11 @@ function Dashboard() {
                         <select value={l.status} onChange={(e) => setStatus(l.id, e.target.value)} data-testid={`lead-status-${l.id}`} className={`rounded-full px-3 py-1.5 text-xs font-medium capitalize outline-none ${STATUS_COLOR[l.status] || ""}`}>
                           {STATUS.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button data-testid={`lead-delete-${l.id}`} onClick={() => removeLead(l.id)} aria-label="Delete lead" title="Delete lead" className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line text-red-600 hover:border-red-500 transition-colors">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </td>
                     </tr>
                   ))}
