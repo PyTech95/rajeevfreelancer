@@ -210,7 +210,7 @@ export default function CaseStudyDetail() {
 
       <section className="mx-auto max-w-[1200px] px-5 md:px-10 pb-4">
         <div className="overflow-hidden rounded-3xl border border-line">
-          <img src={cs.cover} alt={cs.title} className="w-full aspect-[16/8] object-cover" />
+          <img src={cs.cover} alt={cs.title} decoding="async" fetchpriority="high" className="w-full aspect-[16/8] object-cover" />
         </div>
       </section>
 

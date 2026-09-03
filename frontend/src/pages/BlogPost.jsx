@@ -69,7 +69,7 @@ export default function BlogPost() {
           {wordCount > 0 && <span className="font-mono text-xs">· {Math.max(1, Math.round(wordCount / 200))} min read</span>}
         </div>
         <p className="mt-5 text-lg text-ink/70 leading-relaxed">{post.excerpt}</p>
-        <img src={post.cover_image} alt={post.title} className="mt-8 w-full rounded-2xl border border-line object-cover aspect-[16/9]" />
+        <img src={post.cover_image} alt={post.title} decoding="async" fetchpriority="high" className="mt-8 w-full rounded-2xl border border-line object-cover aspect-[16/9]" />
         <div className="mt-10 space-y-5 text-lg text-ink/80 leading-relaxed" data-testid="blog-body">
           {(post.body || []).map((p, i) => <p key={i}>{p}</p>)}
         </div>
@@ -92,7 +92,7 @@ export default function BlogPost() {
               {related.map((p, i) => (
                 <Reveal key={p.slug} delay={i * 0.06}>
                   <Link to={`/blog/${p.slug}`} className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-paper hover:border-ink transition-colors">
-                    <div className="aspect-[16/10] overflow-hidden"><img src={p.cover_image} alt={p.title} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" /></div>
+                    <div className="aspect-[16/10] overflow-hidden"><img src={p.cover_image} alt={p.title} loading="lazy" decoding="async" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" /></div>
                     <div className="p-5"><span className="font-mono text-[11px] uppercase text-brand">{p.category}</span><h3 className="mt-2 font-heading text-lg font-bold leading-snug">{p.title}</h3></div>
                   </Link>
                 </Reveal>

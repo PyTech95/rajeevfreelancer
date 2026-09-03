@@ -41,7 +41,7 @@ export default function BlogIndex() {
               <Reveal key={p.slug} delay={(i % 3) * 0.06}>
                 <Link to={`/blog/${p.slug}`} data-testid={`blog-card-${p.slug}`} className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-white hover:border-ink hover:-translate-y-1 transition-[transform,border-color] duration-300">
                   <div className="aspect-[16/10] overflow-hidden bg-paper">
-                    <img src={p.cover_image} alt={p.title} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img src={p.cover_image} alt={p.title} loading="lazy" decoding="async" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   </div>
                   <div className="flex flex-1 flex-col p-6">
                     <span className="font-mono text-xs uppercase tracking-wide text-brand">{p.category}{p.featured ? " · ★ Featured" : ""}</span>

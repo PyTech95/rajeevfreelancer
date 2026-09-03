@@ -408,3 +408,17 @@ Fixed all GSC indexing blockers reported by the user:
   options) to upload/reference in the new Next.js job for porting the frontend + reusing this backend.
 - Crawler SEO confirmation remains a post-deploy manual check (Domain tab crawling toggle ON +
   GSC URL Inspection on a city page).
+
+## Iteration: SEO / Core Web Vitals polish (2026-06)
+- Audit confirmed on-page SEO is already best-practice (per-route meta, canonical, hreflang,
+  OG/Twitter, JSON-LD: ProfessionalService+AggregateRating+Review, Person/E-E-A-T, WebSite,
+  Breadcrumb, Service, LocalBusiness, FAQPage; robots.txt; dynamic sitemap; IndexNow; all imgs
+  have alt; 1 H1/page; strong internal linking + visible breadcrumbs on location pages).
+- ADDED Core Web Vitals wins: preconnect/dns-prefetch to fonts.gstatic, image CDN & Unsplash in
+  index.html; loading="lazy" + decoding="async" on below-fold images (BlogIndex, BlogPost related,
+  Home blog+about); decoding="async" fetchpriority="high" on hero/LCP images (ServiceHub, BlogPost
+  cover, CaseStudyDetail cover, About). Compiles clean; homepage verified.
+- Note (Google policy): self-hosted AggregateRating/Review on the org's own site is generally NOT
+  eligible for star rich results in Google (self-serving reviews). Schema kept (valid & useful for
+  other engines/AI); real SERP stars require third-party review platforms.
+- Recommend user set GA4 ID (admin tracking field) + paste GSC verification code (already wired).

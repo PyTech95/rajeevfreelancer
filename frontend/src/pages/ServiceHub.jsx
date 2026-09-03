@@ -83,7 +83,7 @@ export default function ServiceHub() {
         {image && (
           <Reveal>
             <div className="relative">
-              <img src={image} alt={service.name} data-testid="service-hero-image" className="w-full rounded-3xl border border-line object-cover aspect-[4/3] shadow-sm" />
+              <img src={image} alt={service.name} data-testid="service-hero-image" decoding="async" fetchpriority="high" className="w-full rounded-3xl border border-line object-cover aspect-[4/3] shadow-sm" />
               <div className="absolute -bottom-4 -left-4 rounded-2xl bg-ink text-white px-5 py-3 shadow-lg">
                 <p className="font-heading text-lg font-bold">Free quote</p>
                 <p className="text-xs text-white/60">Reply within the hour</p>
