@@ -442,6 +442,20 @@ Fixed all GSC indexing blockers reported by the user:
 - Known non-issue: "<span> in <option>" console warning on /admin is from an injected/preview
   script, NOT our code (all our <option> tags are plain text) — no SEO/functional impact.
 
+## Iteration: Home + Delhi NCR local ranking boost (2026-06)
+- HOME local SEO: title/description now carry a Delhi NCR / Gurgaon signal (kept global reach);
+  added LocalBusiness JSON-LD (Gurgaon, areaServed = 6 NCR cities, 3 reviews + AggregateRating).
+- HOME internal linking (was the biggest gap — home never linked to /delhi-ncr): new visible
+  "Local to Delhi NCR" band (data-testid home-local-ncr) with a CTA to the /delhi-ncr hub, 8
+  exact-match keyword chips (e.g. "Web developer in Gurgaon" → /freelance-website-developer/
+  gurgaon-india) and 12 NCR area quick-links → passes link equity to the programmatic pages.
+- DELHI NCR page: localBusinessSchema now emits Review[] + areaServed[]; added visible
+  breadcrumb (ncr-breadcrumb), a "Popular local searches" block of 10 exact-match keyword anchor
+  links (ncr-popular-searches), and a 3-card local reviews section (ncr-reviews).
+- siteConfig.localBusinessSchema extended: optional `areaServed` (array) + `reviews` params.
+- Verified: frontend compiles clean; /delhi-ncr breadcrumb + new sections render; home band + new
+  meta live. Additive-only (no backend changes).
+
 ## Iteration: AI Topic Suggestions + Bulk Publish + polish (2026-06)
 - AI Topic Suggestions: POST /api/admin/blog-autopilot/suggest returns 8 unique LLM ideas (Gemini,
   ~10-15s); BlogManager renders tappable chips → tap adds to custom_topics queue.

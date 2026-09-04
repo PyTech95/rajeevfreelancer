@@ -14,8 +14,8 @@ import ContactForm from "@/components/ContactForm";
 import Magnetic from "@/components/Magnetic";
 import TiltCard from "@/components/TiltCard";
 import { api } from "@/lib/api";
-import { SERVICES, STATS, FEATURED_CITIES, waLink, CONTACT, GOOGLE_PROFILE } from "@/data/site";
-import { faqSchema, REVIEWS } from "@/lib/siteConfig";
+import { SERVICES, STATS, FEATURED_CITIES, NCR_AREAS, waLink, CONTACT, GOOGLE_PROFILE } from "@/data/site";
+import { faqSchema, localBusinessSchema, REVIEWS } from "@/lib/siteConfig";
 import { CASE_STUDIES, fetchCaseStudies } from "@/data/caseStudies";
 
 const HERO_IMG = "https://static.prod-images.emergentagent.com/jobs/3327718a-0568-430d-b33e-b56e7bf18cf5/images/ae2327f0d36b153d0e93995e46712d36f89e61ccbf64b1b29bb83ddfa02c5165.jpeg";
@@ -96,8 +96,8 @@ export default function Home() {
   return (
     <div>
       <Seo
-        title="Rajeev Freelancer — Senior Freelance Engineer & AI/Digital Marketing Consultant"
-        description="Hire Rajeev — a senior freelance engineer & AI/digital marketing consultant with 12+ years' experience. Web development, software, SEO, AI automation & WhatsApp marketing. Available worldwide."
+        title="Rajeev Freelancer — Freelance Web, App, SEO & AI Marketing Expert | Delhi NCR & Worldwide"
+        description="Hire Rajeev — a senior freelance web & app developer, SEO expert and AI/digital-marketing consultant with 12+ years' experience. Based in Gurgaon, serving Delhi NCR, Noida, Faridabad & clients worldwide. Websites from ₹4,999, same-day delivery. Free quote."
         path="/"
         alternates={[
           { lang: "en", path: "/" },
@@ -106,7 +106,17 @@ export default function Home() {
           { lang: "es", path: "/es" },
           { lang: "fr", path: "/fr" },
         ]}
-        jsonLd={[faqSchema(HOME_FAQS)]}
+        jsonLd={[
+          faqSchema(HOME_FAQS),
+          localBusinessSchema({
+            city: "Gurgaon",
+            country: "India",
+            path: "/",
+            name: "Freelance web & app development, SEO, GEO and digital marketing based in Gurgaon, serving all of Delhi NCR and clients worldwide.",
+            areaServed: ["Delhi", "Gurgaon", "Noida", "Greater Noida", "Faridabad", "Ghaziabad"],
+            reviews: REVIEWS.slice(0, 3),
+          }),
+        ]}
       />
 
       {/* HERO */}
@@ -183,6 +193,58 @@ export default function Home() {
       <SkillMarquee />
       <OffersStrip />
       <ProofStrip />
+
+      {/* LOCAL — Delhi NCR internal-link band (local SEO signal + link equity to the /delhi-ncr hub) */}
+      <section className="bg-white border-y border-line" data-testid="home-local-ncr">
+        <div className="mx-auto max-w-[1400px] px-5 md:px-10 py-16 md:py-20">
+          <div className="grid lg:grid-cols-12 gap-10 items-center">
+            <div className="lg:col-span-6">
+              <Reveal><p className="overline flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-brand" /> / Local to Delhi NCR</p></Reveal>
+              <Reveal delay={0.05}>
+                <h2 className="mt-5 max-w-2xl font-heading font-extrabold tracking-tighter text-3xl sm:text-4xl lg:text-5xl leading-[0.95]">
+                  A freelance web developer, SEO expert & marketer in <span className="text-shimmer">Delhi NCR</span>.
+                </h2>
+              </Reveal>
+              <Reveal delay={0.1}>
+                <p className="mt-6 max-w-xl text-ink/70 leading-relaxed">
+                  Based in Gurgaon and working across Delhi, Noida, Greater Noida, Faridabad and Ghaziabad — websites, mobile apps, SEO, Google Ads and AI automation for local businesses. Same-day websites from <strong>₹4,999</strong>, direct and senior-only.
+                </p>
+              </Reveal>
+              <Reveal delay={0.15}>
+                <Link to="/delhi-ncr" data-testid="home-ncr-hub-link" className="mt-8 inline-flex items-center gap-2 rounded-full bg-brand px-7 py-3.5 font-medium text-white hover:bg-ink transition-colors duration-300">
+                  Explore Delhi NCR services <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              </Reveal>
+            </div>
+            <div className="lg:col-span-6">
+              <Reveal delay={0.1}>
+                <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink/40">Popular local searches</p>
+                <div className="mt-5 flex flex-wrap gap-2.5">
+                  {[
+                    { label: "Web developer in Gurgaon", to: "/freelance-website-developer/gurgaon-india" },
+                    { label: "SEO expert in Noida", to: "/freelance-seo-expert/noida-india" },
+                    { label: "App developer in Delhi", to: "/freelance-app-developer/delhi-india" },
+                    { label: "Digital marketing in Faridabad", to: "/freelance-digital-marketing-consultant/faridabad-india" },
+                    { label: "AI consultant in Ghaziabad", to: "/freelance-ai-consultant/ghaziabad-india" },
+                    { label: "WhatsApp marketing in Gurgaon", to: "/whatsapp-marketing-freelancer/gurgaon-india" },
+                    { label: "Website developer in Greater Noida", to: "/freelance-website-developer/greater-noida-india" },
+                    { label: "SEO expert in Delhi", to: "/freelance-seo-expert/delhi-india" },
+                  ].map((l) => (
+                    <Link key={l.to} to={l.to} data-testid={`home-ncr-search-${l.to.split("/").pop()}`} className="inline-flex items-center rounded-full border border-line bg-paper px-4 py-2 text-sm text-ink/70 hover:border-ink hover:text-ink transition-colors">
+                      {l.label}
+                    </Link>
+                  ))}
+                </div>
+                <div className="mt-6 flex flex-wrap gap-x-4 gap-y-1.5">
+                  {NCR_AREAS.slice(0, 12).map((a) => (
+                    <Link key={a.slug} to={`/freelance-website-developer/${a.slug}`} className="text-xs text-ink/45 hover:text-brand link-underline">{a.city}</Link>
+                  ))}
+                </div>
+              </Reveal>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* MANIFESTO */}
       <section className="mx-auto max-w-[1400px] px-5 md:px-10 py-20 md:py-32">

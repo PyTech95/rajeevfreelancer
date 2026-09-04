@@ -225,9 +225,12 @@ export function serviceSchema({ name, description, path, city }) {
   };
 }
 
-export function localBusinessSchema({ city, country, path, name }) {
+export function localBusinessSchema({ city, country, path, name, areaServed, reviews }) {
   const c = getSiteConfig();
   const base = canonicalBase();
+  const area = Array.isArray(areaServed) && areaServed.length
+    ? areaServed.map((a) => ({ "@type": "City", name: a }))
+    : { "@type": "City", name: city };
   return {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
@@ -237,7 +240,7 @@ export function localBusinessSchema({ city, country, path, name }) {
     email: c.contact.email,
     telephone: c.contact.phone,
     priceRange: "$$",
-    areaServed: { "@type": "City", name: city },
+    areaServed: area,
     address: { "@type": "PostalAddress", addressLocality: city, addressCountry: country },
     ...(name ? { description: name } : {}),
     aggregateRating: {
@@ -245,6 +248,16 @@ export function localBusinessSchema({ city, country, path, name }) {
       ratingValue: String(c.business.rating),
       reviewCount: String(c.business.reviews_count),
     },
+    ...(Array.isArray(reviews) && reviews.length
+      ? {
+          review: reviews.map((r) => ({
+            "@type": "Review",
+            reviewRating: { "@type": "Rating", ratingValue: String(r.rating || 5), bestRating: "5" },
+            author: { "@type": "Person", name: r.name },
+            reviewBody: r.quote,
+          })),
+        }
+      : {}),
   };
 }
 

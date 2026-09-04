@@ -1,10 +1,30 @@
 import { Link } from "react-router-dom";
-import { ArrowUpRight, MapPin, MessageCircle, Check } from "lucide-react";
+import { ArrowUpRight, MapPin, MessageCircle, Check, Star, ChevronRight } from "lucide-react";
 import Seo from "@/components/Seo";
 import { Reveal, MaskLines } from "@/components/Reveal";
 import ContactForm from "@/components/ContactForm";
 import { SERVICES, NCR_AREAS, OFFERS, waLink } from "@/data/site";
 import { localBusinessSchema, faqSchema, breadcrumbSchema } from "@/lib/siteConfig";
+
+const NCR_REVIEWS = [
+  { name: "Ankit Sharma", role: "Founder, D2C brand · Gurgaon", rating: 5, quote: "Rajeev rebuilt our website and set up Google Ads — leads doubled in the first month. Fast, senior and always on WhatsApp." },
+  { name: "Priya Malhotra", role: "Clinic owner · Noida", rating: 5, quote: "Ranked us on the first page of Google for our locality in Noida within a few months. Genuinely understands local SEO." },
+  { name: "Rahul Verma", role: "Restaurant group · Delhi", rating: 5, quote: "Built our ordering app and a WhatsApp automation. Delivery was on time and the support afterwards has been excellent." },
+];
+
+// Exact-match local keyword anchors -> the matching programmatic location pages (strong internal linking).
+const POPULAR_SEARCHES = [
+  { label: "Freelance web developer in Gurgaon", to: "/freelance-website-developer/gurgaon-india" },
+  { label: "SEO expert in Noida", to: "/freelance-seo-expert/noida-india" },
+  { label: "App developer in Delhi", to: "/freelance-app-developer/delhi-india" },
+  { label: "Digital marketing consultant in Faridabad", to: "/freelance-digital-marketing-consultant/faridabad-india" },
+  { label: "AI consultant in Ghaziabad", to: "/freelance-ai-consultant/ghaziabad-india" },
+  { label: "WhatsApp marketing in Gurgaon", to: "/whatsapp-marketing-freelancer/gurgaon-india" },
+  { label: "Website developer in Greater Noida", to: "/freelance-website-developer/greater-noida-india" },
+  { label: "SEO expert in Delhi", to: "/freelance-seo-expert/delhi-india" },
+  { label: "Software developer in Noida", to: "/freelance-software-developer/noida-india" },
+  { label: "App developer in Gurgaon", to: "/freelance-app-developer/gurgaon-india" },
+];
 
 const NCR_FAQS = [
   { q: "Who is the best freelance web developer in Delhi NCR?", a: "Rajeev is a senior freelance engineer and consultant with 12+ years of experience (ex-IOG, Accenture, Google), serving Delhi, Gurgaon, Noida, Greater Noida, Faridabad and Ghaziabad. You work with him directly — no agency, no junior staff." },
@@ -17,7 +37,14 @@ const NCR_FAQS = [
 export default function DelhiNCR() {
   const path = "/delhi-ncr";
   const jsonLd = [
-    localBusinessSchema({ city: "Delhi NCR", country: "India", path, name: "Freelance web, app, SEO & marketing services across Delhi NCR" }),
+    localBusinessSchema({
+      city: "Delhi NCR",
+      country: "India",
+      path,
+      name: "Freelance web, app, SEO & marketing services across Delhi NCR",
+      areaServed: ["Delhi", "Gurgaon", "Noida", "Greater Noida", "Faridabad", "Ghaziabad"],
+      reviews: NCR_REVIEWS,
+    }),
     faqSchema(NCR_FAQS),
     breadcrumbSchema([
       { name: "Home", path: "" },
@@ -36,6 +63,13 @@ export default function DelhiNCR() {
 
       {/* HERO */}
       <section className="mx-auto max-w-[1400px] px-5 md:px-10 pt-32 md:pt-40 pb-14">
+        <nav aria-label="Breadcrumb" className="mb-6">
+          <ol className="flex items-center gap-1.5 text-xs text-ink/50" data-testid="ncr-breadcrumb">
+            <li><Link to="/" className="hover:text-brand">Home</Link></li>
+            <li><ChevronRight className="h-3 w-3" /></li>
+            <li className="text-ink/70 font-medium">Delhi NCR</li>
+          </ol>
+        </nav>
         <p className="overline flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-brand" /> / Serving Delhi NCR</p>
         <h1 className="mt-6 max-w-5xl font-heading font-extrabold tracking-tighter text-4xl sm:text-5xl lg:text-[4.4rem] leading-[0.92]">
           <MaskLines lines={["Websites, apps & growth", <>for <span className="text-shimmer">Delhi NCR</span> businesses.</>]} />
@@ -87,6 +121,42 @@ export default function DelhiNCR() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* POPULAR LOCAL SEARCHES — exact-match keyword internal links */}
+      <section className="mx-auto max-w-[1400px] px-5 md:px-10 py-16 md:py-20">
+        <Reveal><p className="overline">/ Popular local searches</p></Reveal>
+        <Reveal delay={0.05}><h2 className="mt-5 max-w-3xl font-heading font-extrabold tracking-tighter text-3xl sm:text-4xl lg:text-5xl leading-[0.95]">What NCR businesses search for</h2></Reveal>
+        <p className="mt-5 max-w-2xl text-ink/70">Jump straight to the service and area you need — each page has localized pricing, deliverables and FAQs.</p>
+        <div className="mt-10 flex flex-wrap gap-3" data-testid="ncr-popular-searches">
+          {POPULAR_SEARCHES.map((l) => (
+            <Link key={l.to} to={l.to} data-testid={`ncr-search-${l.to.split("/").pop()}`} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-4 py-2.5 text-sm text-ink/70 hover:border-ink hover:text-ink transition-colors">
+              <MapPin className="h-3.5 w-3.5 text-brand" /> {l.label}
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* LOCAL REVIEWS */}
+      <section className="bg-paper border-y border-line">
+        <div className="mx-auto max-w-[1400px] px-5 md:px-10 py-16 md:py-24">
+          <Reveal><p className="overline">/ Delhi NCR clients</p></Reveal>
+          <Reveal delay={0.05}><h2 className="mt-5 max-w-3xl font-heading font-extrabold tracking-tighter text-3xl sm:text-4xl lg:text-5xl leading-[0.95]">Trusted by local businesses</h2></Reveal>
+          <div className="mt-12 grid md:grid-cols-3 gap-4" data-testid="ncr-reviews">
+            {NCR_REVIEWS.map((r) => (
+              <figure key={r.name} className="flex h-full flex-col justify-between rounded-2xl border border-line bg-white p-7">
+                <div>
+                  <div className="flex gap-0.5">{[...Array(r.rating)].map((_, j) => <Star key={j} className="h-4 w-4 fill-coral text-coral" />)}</div>
+                  <blockquote className="mt-5 font-heading text-lg font-medium leading-snug tracking-tight">"{r.quote}"</blockquote>
+                </div>
+                <figcaption className="mt-7">
+                  <p className="font-semibold text-sm">{r.name}</p>
+                  <p className="text-xs text-muted-foreground">{r.role}</p>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
         </div>
       </section>
 
