@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
-import { Loader2, Newspaper, ChevronDown, Plus, Trash2, Pencil, GripVertical, Sparkles, Zap, Check, Eye } from "lucide-react";
+import { Loader2, Newspaper, ChevronDown, Plus, Trash2, Pencil, GripVertical, Sparkles, Zap, Check, Eye, Lightbulb } from "lucide-react";
 import { api, formatApiErrorDetail } from "@/lib/api";
 import ImageUpload from "@/pages/admin/ImageUpload";
 
@@ -50,6 +50,42 @@ export default function BlogManager() {
     } catch (err) {
       toast.error(formatApiErrorDetail(err.response?.data?.detail) || "Generation failed — try again");
     } finally { setRunning(false); }
+  };
+
+  const [suggestions, setSuggestions] = useState([]);
+  const [suggesting, setSuggesting] = useState(false);
+  const [selected, setSelected] = useState(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  const suggestTopics = async () => {
+    setSuggesting(true);
+    try { const { data } = await api.post("/admin/blog-autopilot/suggest"); setSuggestions(data.suggestions || []); }
+    catch { toast.error("Couldn't fetch suggestions — try again"); }
+    finally { setSuggesting(false); }
+  };
+  const addSuggestion = async (idea) => {
+    const cur = topicsDraft.split("\n").map((s) => s.trim()).filter(Boolean);
+    if (cur.some((s) => s.toLowerCase() === idea.toLowerCase())) {
+      setSuggestions((s) => s.filter((x) => x !== idea));
+      toast.info("Already in your queue");
+      return;
+    }
+    const next = [...cur, idea];
+    try {
+      const { data } = await api.put("/admin/blog-autopilot", { custom_topics: next });
+      setAp(data);
+      setTopicsDraft((data.custom_topics || []).join("\n"));
+      setSuggestions((s) => s.filter((x) => x !== idea));
+      toast.success("Added to your queue");
+    } catch { toast.error("Could not add"); }
+  };
+  const toggleSel = (id) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const bulkPublish = async (published) => {
+    if (!selected.size) return;
+    setBulkBusy(true);
+    try { const { data } = await api.post("/admin/blog/bulk-publish", { ids: [...selected], published }); toast.success(`${data.updated} post(s) ${published ? "published" : "moved to draft"}`); setSelected(new Set()); load(); }
+    catch { toast.error("Bulk action failed"); }
+    finally { setBulkBusy(false); }
   };
 
   const reorder = async (from, to) => {
@@ -140,8 +176,20 @@ export default function BlogManager() {
                     </label>
                     <div className="mt-1 flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">{(ap.custom_topics || []).length} queued idea(s) — each is used once, then removed</span>
-                      <button data-testid="autopilot-save-topics" onClick={saveTopics} className="text-xs font-medium text-brand hover:underline">Save ideas</button>
+                      <div className="flex items-center gap-4">
+                        <button data-testid="autopilot-suggest" onClick={suggestTopics} disabled={suggesting} className="inline-flex items-center gap-1.5 text-xs font-medium text-ink hover:text-brand disabled:opacity-50">{suggesting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Lightbulb className="h-3.5 w-3.5" />} Suggest ideas</button>
+                        <button data-testid="autopilot-save-topics" onClick={saveTopics} className="text-xs font-medium text-brand hover:underline">Save ideas</button>
+                      </div>
                     </div>
+                    {suggestions.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2" data-testid="autopilot-suggestions">
+                        {suggestions.map((idea) => (
+                          <button key={idea} data-testid="autopilot-suggestion-chip" onClick={() => addSuggestion(idea)} title="Add to queue" className="inline-flex items-center gap-1 rounded-full border border-brand/30 bg-white px-3 py-1.5 text-xs text-ink hover:bg-brand hover:text-white transition-colors">
+                            <Plus className="h-3 w-3" /> {idea}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground border-t border-brand/10 pt-3" data-testid="autopilot-status">
                     <span>Next topic: <span className="text-ink/70">{ap.next_topic}</span></span>
@@ -151,9 +199,20 @@ export default function BlogManager() {
                   </div>
                 </div>
               )}
-              <div className="flex justify-between items-center">
-                <p className="text-sm text-muted-foreground">{posts.length} post(s)</p>
-                <button data-testid="blog-new" onClick={startNew} className="inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-ink transition-colors"><Plus className="h-4 w-4" /> New post</button>
+              <div className="flex flex-wrap justify-between items-center gap-3">
+                <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+                  <input type="checkbox" data-testid="blog-select-all" checked={posts.length > 0 && selected.size === posts.length} onChange={() => setSelected(selected.size === posts.length ? new Set() : new Set(posts.map((p) => p.id)))} className="h-4 w-4 accent-[#0055FF]" />
+                  {selected.size ? `${selected.size} selected` : `${posts.length} post(s)`}
+                </label>
+                <div className="flex items-center gap-2">
+                  {selected.size > 0 && (
+                    <>
+                      <button data-testid="bulk-publish" onClick={() => bulkPublish(true)} disabled={bulkBusy} className="inline-flex items-center gap-1.5 rounded-full border border-green-500/50 bg-green-50 px-3 py-2 text-xs font-medium text-green-700 hover:bg-green-100 disabled:opacity-50"><Check className="h-3.5 w-3.5" /> Publish selected</button>
+                      <button data-testid="bulk-unpublish" onClick={() => bulkPublish(false)} disabled={bulkBusy} className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/50 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 hover:bg-amber-100 disabled:opacity-50"><Eye className="h-3.5 w-3.5" /> Move to draft</button>
+                    </>
+                  )}
+                  <button data-testid="blog-new" onClick={startNew} className="inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-ink transition-colors"><Plus className="h-4 w-4" /> New post</button>
+                </div>
               </div>
               <div className="mt-4 divide-y divide-line border border-line rounded-xl">
                 {posts.map((p, idx) => (
@@ -162,6 +221,7 @@ export default function BlogManager() {
                     onDragOver={(e) => e.preventDefault()} onDrop={() => reorder(dragIndex.current, idx)}
                     className="flex items-center justify-between gap-3 px-4 py-3 bg-white">
                     <div className="flex items-center gap-2 min-w-0">
+                      <input type="checkbox" data-testid={`blog-select-${p.slug}`} checked={selected.has(p.id)} onChange={() => toggleSel(p.id)} className="h-4 w-4 shrink-0 accent-[#0055FF]" />
                       <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-ink/30" />
                       <div className="min-w-0">
                         <p className="font-medium text-sm truncate">{p.title}</p>

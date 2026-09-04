@@ -442,6 +442,18 @@ Fixed all GSC indexing blockers reported by the user:
 - Known non-issue: "<span> in <option>" console warning on /admin is from an injected/preview
   script, NOT our code (all our <option> tags are plain text) — no SEO/functional impact.
 
+## Iteration: AI Topic Suggestions + Bulk Publish + polish (2026-06)
+- AI Topic Suggestions: POST /api/admin/blog-autopilot/suggest returns 8 unique LLM ideas (Gemini,
+  ~10-15s); BlogManager renders tappable chips → tap adds to custom_topics queue.
+- Bulk Publish: POST /api/admin/blog/bulk-publish (now a Pydantic BulkPublishInput model:
+  ids: List[str], published: bool) — per-row checkboxes + select-all + "Publish selected" /
+  "Move to draft"; pings IndexNow on publish. Bad types now 422 (was silently str()-cast).
+- POLISH (iteration_5 optional items, done): suggestion chip removed only AFTER the queue PUT
+  succeeds (idea no longer lost if save fails); duplicate idea shows an info toast "Already in
+  your queue" instead of silently disappearing.
+- Testing: iteration_5.json 100% backend + 100% frontend. Post-polish self-test: bulk-publish
+  empty→400, bad-type→422, unknown ids→200 updated:0; frontend compiles clean.
+
 ## Iteration: Autopilot custom topics + one-click publish (2026-06)
 - Custom topics: autopilot settings gained custom_topics[] (dedup/trim/cap 50). Generation uses the
   first custom topic first, then removes it from the queue; falls back to the default 56-topic

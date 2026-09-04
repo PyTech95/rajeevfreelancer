@@ -877,6 +877,28 @@ async def admin_update_blog(post_id: str, payload: BlogInput, admin: dict = Depe
     return post
 
 
+class BulkPublishInput(BaseModel):
+    ids: List[str] = Field(default_factory=list)
+    published: bool = True
+
+
+@api_router.post("/admin/blog/bulk-publish")
+async def admin_bulk_publish(body: BulkPublishInput, admin: dict = Depends(get_current_admin)):
+    ids = [str(i).strip() for i in body.ids if str(i).strip()]
+    published = body.published
+    if not ids:
+        raise HTTPException(status_code=400, detail="No posts selected")
+    res = await db.blog_posts.update_many(
+        {"id": {"$in": ids}},
+        {"$set": {"published": published, "updated_at": datetime.now(timezone.utc).isoformat()}},
+    )
+    if published:
+        slugs = [d["slug"] async for d in db.blog_posts.find({"id": {"$in": ids}}, {"slug": 1})]
+        if slugs:
+            asyncio.create_task(ping_indexnow([f"/blog/{s}" for s in slugs]))
+    return {"ok": True, "updated": res.modified_count}
+
+
 @api_router.patch("/admin/blog/{post_id}/publish")
 async def admin_set_blog_published(post_id: str, body: dict, admin: dict = Depends(get_current_admin)):
     published = bool(body.get("published", True))
@@ -1433,6 +1455,36 @@ async def run_blog_autopilot(admin: dict = Depends(get_current_admin)):
     if not post:
         raise HTTPException(status_code=502, detail="Generation failed — please try again")
     return post
+
+
+@api_router.post("/admin/blog-autopilot/suggest")
+async def suggest_blog_topics(admin: dict = Depends(get_current_admin)):
+    existing = await db.blog_posts.distinct("title")
+    services = ", ".join(s["name"] for s in SERVICES)
+    prompt = f"""Suggest 8 fresh, high-search-intent SEO blog topic ideas for "Rajeev Freelancer", whose services are: {services}.
+Audience: small/medium business owners, founders and marketing leads. Prefer specific, current (2026) angles with a clear primary keyword.
+Do NOT repeat any of these existing titles: {json.dumps(existing[:60])}.
+Return ONLY a JSON array of exactly 8 short topic strings, each <= 70 characters, no numbering, no markdown."""
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        chat = LlmChat(
+            api_key=os.environ["EMERGENT_LLM_KEY"],
+            session_id=f"topics-{uuid.uuid4().hex[:8]}",
+            system_message="You are an SEO content strategist. Reply with a JSON array of concise blog topic ideas only.",
+        ).with_model("gemini", "gemini-3-flash-preview")
+        async with _llm_gate:
+            resp = await chat.send_message(UserMessage(text=prompt))
+        text = resp if isinstance(resp, str) else str(resp)
+        text = re.sub(r"^```(json)?|```$", "", text.strip(), flags=re.MULTILINE).strip()
+        m = re.search(r"\[.*\]", text, re.DOTALL)
+        arr = json.loads(m.group(0) if m else text)
+        ideas = [str(x).strip().strip('"').strip() for x in arr if str(x).strip()][:8]
+        if not ideas:
+            raise ValueError("empty")
+        return {"suggestions": ideas}
+    except Exception as e:
+        logger.warning(f"Topic suggestion failed: {e}")
+        raise HTTPException(status_code=502, detail="Could not fetch suggestions — please try again")
 
 
 app.include_router(api_router)
