@@ -41,9 +41,11 @@ _last_error: str | None = None
 
 def apply_config(cfg: dict) -> None:
     """Override env defaults with admin-saved settings (server-side only)."""
-    global EMAIL_PROVIDER, SMTP_USER, SMTP_PASSWORD, SENDER_EMAIL, OWNER_EMAILS, OWNER_EMAIL, EMAIL_FROM_NAME
+    global EMAIL_PROVIDER, SMTP_USER, SMTP_PASSWORD, SENDER_EMAIL, OWNER_EMAILS, OWNER_EMAIL, EMAIL_FROM_NAME, SITE_URL
     if not cfg:
         return
+    if cfg.get("site_url"):
+        SITE_URL = str(cfg["site_url"]).strip().rstrip("/")
     if cfg.get("provider"):
         EMAIL_PROVIDER = str(cfg["provider"]).lower()
     if cfg.get("smtp_user") is not None:

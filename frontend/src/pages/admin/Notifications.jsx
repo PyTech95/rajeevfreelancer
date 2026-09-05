@@ -36,7 +36,7 @@ function Row({ label, hint, children }) {
 }
 
 function EmailForm({ cfg, status, onSaved }) {
-  const [f, setF] = useState({ smtp_user: cfg.smtp_user || "", smtp_password: "", owner_emails: (cfg.owner_emails || status.owner_emails || []).join(", ") });
+  const [f, setF] = useState({ smtp_user: cfg.smtp_user || "", smtp_password: "", owner_emails: (cfg.owner_emails || status.owner_emails || []).join(", "), site_url: cfg.site_url || "" });
   const [saving, setSaving] = useState(false);
   const save = async () => {
     setSaving(true);
@@ -60,6 +60,9 @@ function EmailForm({ cfg, status, onSaved }) {
           <input data-testid="notif-smtp-password" type="password" className={field} value={f.smtp_password} onChange={(e) => setF({ ...f, smtp_password: e.target.value })} placeholder={cfg.smtp_password_set ? "•••••••• (unchanged)" : "16-character app password"} />
         </Row>
         <Row label="Send alerts to (comma-separated)"><input data-testid="notif-owner-emails" className={field} value={f.owner_emails} onChange={(e) => setF({ ...f, owner_emails: e.target.value })} /></Row>
+        <Row label="Website URL in email links" hint="Used for the dashboard/website links inside alert emails. Set to https://www.rajeevfreelancer.com once the domain is live; leave blank to use the default.">
+          <input data-testid="notif-site-url" className={field} value={f.site_url} onChange={(e) => setF({ ...f, site_url: e.target.value })} placeholder="https://www.rajeevfreelancer.com" />
+        </Row>
         {status.last_error && <p className="text-xs text-rose-600 break-all" data-testid="notif-email-error">Last error: {status.last_error}</p>}
         <button data-testid="notif-save-email" onClick={save} disabled={saving} className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-sm font-medium hover:border-ink transition-colors disabled:opacity-50">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save email settings

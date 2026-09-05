@@ -119,6 +119,15 @@ Not a plain portfolio — a mature freelance marketing platform (rajeevfreelance
       rejected, short rejected, change+login works, survives restart, reverted to
       documented password. Live on prod (endpoint returns proper 400s).
 
+- [x] EMAIL LINK BASE override: "site_url" added to admin notifications email
+      config (+ EmailForm field "Website URL in email links"). After the custom
+      domain goes live, set https://www.rajeevfreelancer.com there — one save, no
+      redeploy. Verified round-trip + send on preview.
+- [ ] PENDING USER ACTION: connect custom domain rajeevfreelancer.com in the
+      Emergent deploy UI + DNS at registrar, then (a) paste WhatsApp Phone Number
+      ID + Access Token in Admin → Notifications, (b) set site_url override,
+      (c) submit sitemap in GSC for the real domain.
+
 ## Backlog / P0-P2
 - P0: Deploy via platform (in progress); post-deploy GSC sitemap submit + www redirect.
 - P1: Add RESEND_API_KEY / verify sending domain for lead + confirmation emails.

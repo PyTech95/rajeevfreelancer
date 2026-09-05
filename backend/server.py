@@ -485,7 +485,7 @@ class NotificationConfigInput(BaseModel):
     whatsapp: Optional[dict] = None
 
 
-_EMAIL_KEYS = {"provider", "smtp_user", "smtp_password", "from_name", "owner_emails"}
+_EMAIL_KEYS = {"provider", "smtp_user", "smtp_password", "from_name", "owner_emails", "site_url"}
 _WA_KEYS = {"api_version", "phone_number_id", "access_token", "recipients", "template_name", "template_language"}
 
 
