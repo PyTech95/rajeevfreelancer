@@ -232,7 +232,7 @@ def _fallback_content(service: dict, loc: dict) -> dict:
         "whatsapp_section": f"Communication is on WhatsApp for speed. You get quick answers, progress updates, screen recordings and automated alerts, all aligned to {country}'s business hours, so you are never left waiting on a ticket queue.",
         "local_context": f"{city} hosts a diverse economy, from startups and retail to services and enterprise. Rajeev tailors {service['short'].lower()} to the buying behaviour, languages and channels that convert best in {country}.",
         "faqs": [
-            {"q": f"Who is the best {kw} in {city}?", "a": f"Rajeev is a senior freelance specialist serving {city} clients with 12+ years of experience and a senior-only, hands-on approach."},
+            {"q": f"Who is the best {kw} in {city}?", "a": f"Rajeev is a senior freelancer serving {city} clients with 12+ years of experience and a senior-only, hands-on approach."},
             {"q": f"How much does a {kw} charge in {city}?", "a": f"Pricing depends on scope. Most {city} engagements start with a free consultation and a fixed-scope proposal so there are no surprises."},
             {"q": "How do we communicate across time zones?", "a": f"Primarily over WhatsApp and scheduled calls aligned to {country}'s hours, with async updates in between."},
             {"q": "How soon will I see results?", "a": "It varies by service, but you will see a clear roadmap in week one and early wins within the first month."},
@@ -243,7 +243,7 @@ def _fallback_content(service: dict, loc: dict) -> dict:
 
 
 CONTENT_SYSTEM = (
-    "You are an expert SEO copywriter writing for Rajeev Freelancer, a senior freelance engineer & "
+    "You are an expert SEO copywriter writing for Rajeev Freelancer, a senior freelancer & engineer "
     "AI/digital-marketing consultant with 12+ years of experience (ex-IOG, Accenture, Google). "
     "Tone: professional, confident, friendly, results-focused. Write for SMB owners, founders and marketing leads. "
     "Return ONLY valid minified JSON, no markdown, no commentary."
@@ -713,8 +713,8 @@ async def get_digest_settings(admin: dict = Depends(get_current_admin)):
 DEFAULT_SITE = {
     "seo": {
         "site_name": "Rajeev Freelancer",
-        "default_title": "Rajeev Freelancer — Senior Freelance Engineer & AI/Digital Marketing Consultant",
-        "default_description": "Hire Rajeev — a senior freelance engineer & AI/digital marketing consultant with 12+ years' experience. Web development, software, SEO, AI automation & WhatsApp marketing. Available worldwide.",
+        "default_title": "Rajeev Freelancer — Senior Freelancer & AI/Digital Marketing Consultant",
+        "default_description": "Hire Rajeev — a senior freelancer & AI/digital marketing consultant with 12+ years' experience. Web development, software, SEO, AI automation & WhatsApp marketing. Available worldwide.",
         "og_image": "https://customer-assets-gfyr7b9c.emergentagent.net/job_rajeev-seo-hub/artifacts/whqtfhxo_image.png",
         "canonical_domain": "https://www.rajeevfreelancer.com",
         "twitter_handle": "@rajeevfreelancer",
@@ -1276,6 +1276,8 @@ async def sitemap():
     ]
     for lang in ("hi", "ar", "es", "fr"):
         entries.append((f"{base}/{lang}", "0.6", "monthly"))
+    for region in ("us", "uk", "de"):
+        entries.append((f"{base}/{region}", "0.8", "weekly"))
     for cs in await db.case_studies.find({"published": True}, {"_id": 0, "slug": 1}).to_list(500):
         entries.append((f"{base}/case-studies/{cs['slug']}", "0.7", "monthly"))
     for p in await db.blog_posts.find({"published": True}, {"_id": 0, "slug": 1}).to_list(500):
@@ -1357,6 +1359,26 @@ async def _reslug_content():
                     clean = f"{clean}-{str(doc.get('id',''))[:6]}"
                 await db[coll].update_one({"id": doc.get("id")}, {"$set": {"slug": clean}})
                 logger.info(f"Re-slugged {coll}: {slug} -> {clean}")
+
+    # One-time: service slugs renamed freelance-* -> freelancer-* (keyword strategy).
+    # Drop cached location pages under old slugs (they regenerate on demand with the
+    # new naming) and repoint case-study service references.
+    slug_rename = {
+        "freelance-ai-consultant": "freelancer-ai-consultant",
+        "freelance-digital-marketing-consultant": "freelancer-digital-marketing-consultant",
+        "freelance-seo-expert": "freelancer-seo-expert",
+        "freelance-website-developer": "freelancer-website-developer",
+        "freelance-app-developer": "freelancer-app-developer",
+        "freelance-software-developer": "freelancer-software-developer",
+    }
+    res = await db.location_pages.delete_many({"key": {"$regex": "^freelance-"}})
+    if res.deleted_count:
+        logger.info(f"Dropped {res.deleted_count} cached location pages with pre-rename slugs (regenerate on demand)")
+    async for doc in db.case_studies.find({}, {"id": 1, "services": 1}):
+        svcs = doc.get("services") or []
+        renamed = [slug_rename.get(s, s) for s in svcs]
+        if renamed != svcs:
+            await db.case_studies.update_one({"id": doc["id"]}, {"$set": {"services": renamed}})
 
 
 @api_router.post("/admin/blog-autopilot/suggest")

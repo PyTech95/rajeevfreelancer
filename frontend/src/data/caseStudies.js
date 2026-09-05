@@ -41,7 +41,7 @@ export const CASE_STUDIES = [
       { value: "92", label: "avg. Core Web Vitals score" },
       { value: "40+", label: "ranking pages shipped" },
     ],
-    services: ["freelance-seo-expert", "freelance-website-developer"],
+    services: ["freelancer-seo-expert", "freelancer-website-developer"],
     stack: ["Technical SEO", "GEO / Schema", "Content strategy", "React"],
     chart: { label: "Monthly organic sessions", before: 8000, after: 24000, suffix: "", higherIsBetter: true },
     quote: {
@@ -79,7 +79,7 @@ export const CASE_STUDIES = [
       { value: "-64%", label: "repetitive tickets" },
       { value: "0", label: "extra headcount needed" },
     ],
-    services: ["freelance-ai-consultant", "whatsapp-marketing-freelancer"],
+    services: ["freelancer-ai-consultant", "whatsapp-marketing-freelancer"],
     stack: ["AI agents", "WhatsApp API", "Python", "Automation"],
     chart: { label: "Avg. first-response time (min)", before: 45, after: 9, suffix: " min", higherIsBetter: false },
     quote: {
@@ -117,7 +117,7 @@ export const CASE_STUDIES = [
       { value: "<1s", label: "median load time" },
       { value: "+21%", label: "average order value" },
     ],
-    services: ["freelance-website-developer", "freelance-software-developer"],
+    services: ["freelancer-website-developer", "freelancer-software-developer"],
     stack: ["React", "Performance", "UX", "Custom checkout"],
     chart: { label: "Conversion rate (%)", before: 1.9, after: 2.9, suffix: "%", higherIsBetter: true },
     quote: {
@@ -155,7 +155,7 @@ export const CASE_STUDIES = [
       { value: "68%", label: "broadcast open rate" },
       { value: "12", label: "outlets onboarded" },
     ],
-    services: ["whatsapp-marketing-freelancer", "freelance-digital-marketing-consultant"],
+    services: ["whatsapp-marketing-freelancer", "freelancer-digital-marketing-consultant"],
     stack: ["WhatsApp API", "Automation", "Segmentation", "CRM"],
     chart: { label: "Share of revenue from WhatsApp (%)", before: 6, after: 42, suffix: "%", higherIsBetter: true },
     quote: {
@@ -193,7 +193,7 @@ export const CASE_STUDIES = [
       { value: "-42%", label: "crash rate vs old app" },
       { value: "3", label: "platforms shipped" },
     ],
-    services: ["freelance-app-developer", "freelance-software-developer"],
+    services: ["freelancer-app-developer", "freelancer-software-developer"],
     stack: ["Cross-platform", "Native UX", "CI/CD", "Analytics"],
     chart: { label: "Downloads in first 90 days", before: 4000, after: 50000, suffix: "", higherIsBetter: true },
     quote: {
@@ -231,7 +231,7 @@ export const CASE_STUDIES = [
       { value: "+63%", label: "landing page conversion" },
       { value: "4:1", label: "blended ROAS" },
     ],
-    services: ["freelance-digital-marketing-consultant", "freelance-seo-expert"],
+    services: ["freelancer-digital-marketing-consultant", "freelancer-seo-expert"],
     stack: ["Google Ads", "Conversion tracking", "Landing pages", "CRO"],
     chart: { label: "Cost per acquisition ($)", before: 82, after: 51, suffix: "", prefix: "$", higherIsBetter: false },
     quote: {

@@ -12,20 +12,20 @@ import { REVIEWS, getSiteConfig, canonicalBase, breadcrumbSchema, faqSchema } fr
 
 const PATH = "/free-quote";
 const PILLARS = {
-  website: { icon: Code, title: "Website Development", kw: "website development", slug: "freelance-website-developer",
+  website: { icon: Code, title: "Website Development", kw: "website development", slug: "freelancer-website-developer",
     text: "Fast, mobile-first business websites, WordPress builds and custom React web apps designed to convert visitors into enquiries.",
     points: ["Business & company websites", "WordPress, Shopify & custom React", "Landing pages that convert", "Speed, security & Core Web Vitals"] },
-  app: { icon: Smartphone, title: "Mobile App Development", kw: "app development", slug: "freelance-app-developer",
+  app: { icon: Smartphone, title: "Mobile App Development", kw: "app development", slug: "freelancer-app-developer",
     text: "iOS, Android and React Native apps — from MVP to App Store launch — built by a senior engineer, not a junior team.",
     points: ["Android & iOS apps", "React Native / cross-platform", "Backend, APIs & admin panels", "App Store & Play Store launch"] },
-  marketing: { icon: TrendingUp, title: "Digital Marketing & SEO", kw: "digital marketing", slug: "freelance-digital-marketing-consultant",
+  marketing: { icon: TrendingUp, title: "Digital Marketing & SEO", kw: "digital marketing", slug: "freelancer-digital-marketing-consultant",
     text: "Google Ads, SEO, WhatsApp automation and AI-search visibility engineered around leads and revenue — not vanity metrics.",
     points: ["Google Ads & Meta Ads management", "SEO, local SEO & technical SEO", "WhatsApp & SMS marketing automation", "AI chatbots & lead nurturing"] },
 };
 const ORDER = { website: ["website", "app", "marketing"], app: ["app", "website", "marketing"], marketing: ["marketing", "website", "app"] };
 const HEADLINES = {
   website: "Need a website that actually brings customers?",
-  app: "Launch your mobile app with a senior freelance developer",
+  app: "Launch your mobile app with a senior freelancer developer",
   marketing: "Get more leads with expert digital marketing & SEO",
   default: "Website, App & Digital Marketing — one senior freelancer, zero agency overhead",
 };

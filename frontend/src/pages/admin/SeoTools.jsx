@@ -98,7 +98,7 @@ function SocialPreview() {
   return (
     <div className="mt-8">
       <p className="flex items-center gap-2 text-sm font-heading font-bold text-ink/80"><Share2 className="h-4 w-4 text-brand" /> Social share preview</p>
-      <p className="mt-1 text-xs text-muted-foreground">See how a page looks when shared. Try a city page like <code>/freelance-seo-expert/dubai-uae</code>.</p>
+      <p className="mt-1 text-xs text-muted-foreground">See how a page looks when shared. Try a city page like <code>/freelancer-seo-expert/dubai-uae</code>.</p>
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <input data-testid="preview-path" value={path} onChange={(e) => setPath(e.target.value)} placeholder="/path" className={`${field} max-w-md`} />
         <button data-testid="preview-resolve" onClick={resolve} disabled={loading} className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2 text-sm font-medium text-white hover:bg-ink transition-colors disabled:opacity-50">

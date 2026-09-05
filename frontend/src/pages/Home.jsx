@@ -44,7 +44,7 @@ const TESTIMONIALS = REVIEWS;
 
 // Answer-first Q&A — engineered for Google rich results AND AI-answer citation (GEO/AEO).
 const HOME_FAQS = [
-  { q: "Who is Rajeev Freelancer?", a: "Rajeev is a senior freelance engineer and AI/digital-marketing consultant with 12+ years of experience (ex-IOG, Accenture, Google). He builds websites and custom software and runs SEO, GEO, AI automation and WhatsApp/SMS marketing for businesses in 27+ countries." },
+  { q: "Who is Rajeev Freelancer?", a: "Rajeev is a senior freelancer and AI/digital-marketing consultant with 12+ years of experience (ex-IOG, Accenture, Google). He builds websites and custom software and runs SEO, GEO, AI automation and WhatsApp/SMS marketing for businesses in 27+ countries." },
   { q: "What services does Rajeev offer?", a: "Web development, custom software and mobile apps, SEO and GEO (AI-search optimization), digital marketing, AI automation and chatbots, plus WhatsApp and SMS marketing — all delivered personally, senior-only." },
   { q: "How much does it cost to hire Rajeev?", a: "Every project starts with a free consultation and a fixed-scope proposal, so there are no surprises. Pricing depends on scope; most engagements begin between $1k and $10k, with larger builds quoted individually. See the pricing page for currency-localised ranges." },
   { q: "Where is Rajeev based and does he work remotely?", a: "Rajeev is based in Gurgaon, India and works remotely with founders and teams worldwide, having served clients across 27+ countries. Communication is fast and time-zone aware, primarily over WhatsApp." },
@@ -96,11 +96,14 @@ export default function Home() {
   return (
     <div>
       <Seo
-        title="Rajeev Freelancer — Freelance Web, App, SEO & AI Marketing Expert | Delhi NCR & Worldwide"
-        description="Hire Rajeev — a senior freelance web & app developer, SEO expert and AI/digital-marketing consultant with 12+ years' experience. Based in Gurgaon, serving Delhi NCR, Noida, Faridabad & clients worldwide. Websites from ₹4,999, same-day delivery. Free quote."
+        title="Rajeev Freelancer — Freelancer for Web, App, SEO & AI Marketing | Delhi NCR & Worldwide"
+        description="Hire Rajeev — a senior freelancer for web & app development, SEO and AI/digital marketing with 12+ years' experience. Based in Gurgaon, serving Delhi NCR, Noida, Faridabad & clients worldwide. Websites from ₹4,999, same-day delivery. Free quote."
         path="/"
         alternates={[
           { lang: "en", path: "/" },
+          { lang: "en-US", path: "/us" },
+          { lang: "en-GB", path: "/uk" },
+          { lang: "de", path: "/de" },
           { lang: "hi", path: "/hi" },
           { lang: "ar", path: "/ar" },
           { lang: "es", path: "/es" },
@@ -112,7 +115,7 @@ export default function Home() {
             city: "Gurgaon",
             country: "India",
             path: "/",
-            name: "Freelance web & app development, SEO, GEO and digital marketing based in Gurgaon, serving all of Delhi NCR and clients worldwide.",
+            name: "Freelancer for web & app development, SEO, GEO and digital marketing based in Gurgaon, serving all of Delhi NCR and clients worldwide.",
             areaServed: ["Delhi", "Gurgaon", "Noida", "Greater Noida", "Faridabad", "Ghaziabad"],
             reviews: REVIEWS.slice(0, 3),
           }),
@@ -134,7 +137,7 @@ export default function Home() {
               <MaskLines lines={["Design. Build.", <>Market. <span className="text-shimmer">Scale.</span></>]} delay={0.15} />
             </h1>
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.7 }} className="mt-7 max-w-xl text-base md:text-lg text-ink/70 leading-relaxed">
-              I'm a senior freelance engineer & consultant with 12+ years turning websites, software, SEO, digital marketing and AI automation into revenue — for businesses in {FEATURED_CITIES.length}+ cities worldwide.
+              I'm a senior freelancer & consultant with 12+ years turning websites, software, SEO, digital marketing and AI automation into revenue — for businesses in {FEATURED_CITIES.length}+ cities worldwide.
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.85, duration: 0.7 }} className="mt-9 flex flex-wrap gap-3">
               <Magnetic>
@@ -202,7 +205,7 @@ export default function Home() {
               <Reveal><p className="overline flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-brand" /> / Local to Delhi NCR</p></Reveal>
               <Reveal delay={0.05}>
                 <h2 className="mt-5 max-w-2xl font-heading font-extrabold tracking-tighter text-3xl sm:text-4xl lg:text-5xl leading-[0.95]">
-                  A freelance web developer, SEO expert & marketer in <span className="text-shimmer">Delhi NCR</span>.
+                  A web development freelancer, SEO expert & marketer in <span className="text-shimmer">Delhi NCR</span>.
                 </h2>
               </Reveal>
               <Reveal delay={0.1}>
@@ -221,14 +224,14 @@ export default function Home() {
                 <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink/40">Popular local searches</p>
                 <div className="mt-5 flex flex-wrap gap-2.5">
                   {[
-                    { label: "Web developer in Gurgaon", to: "/freelance-website-developer/gurgaon-india" },
-                    { label: "SEO expert in Noida", to: "/freelance-seo-expert/noida-india" },
-                    { label: "App developer in Delhi", to: "/freelance-app-developer/delhi-india" },
-                    { label: "Digital marketing in Faridabad", to: "/freelance-digital-marketing-consultant/faridabad-india" },
-                    { label: "AI consultant in Ghaziabad", to: "/freelance-ai-consultant/ghaziabad-india" },
+                    { label: "Web developer in Gurgaon", to: "/freelancer-website-developer/gurgaon-india" },
+                    { label: "SEO expert in Noida", to: "/freelancer-seo-expert/noida-india" },
+                    { label: "App developer in Delhi", to: "/freelancer-app-developer/delhi-india" },
+                    { label: "Digital marketing in Faridabad", to: "/freelancer-digital-marketing-consultant/faridabad-india" },
+                    { label: "AI consultant in Ghaziabad", to: "/freelancer-ai-consultant/ghaziabad-india" },
                     { label: "WhatsApp marketing in Gurgaon", to: "/whatsapp-marketing-freelancer/gurgaon-india" },
-                    { label: "Website developer in Greater Noida", to: "/freelance-website-developer/greater-noida-india" },
-                    { label: "SEO expert in Delhi", to: "/freelance-seo-expert/delhi-india" },
+                    { label: "Website developer in Greater Noida", to: "/freelancer-website-developer/greater-noida-india" },
+                    { label: "SEO expert in Delhi", to: "/freelancer-seo-expert/delhi-india" },
                   ].map((l) => (
                     <Link key={l.to} to={l.to} data-testid={`home-ncr-search-${l.to.split("/").pop()}`} className="inline-flex items-center rounded-full border border-line bg-paper px-4 py-2 text-sm text-ink/70 hover:border-ink hover:text-ink transition-colors">
                       {l.label}
@@ -237,7 +240,7 @@ export default function Home() {
                 </div>
                 <div className="mt-6 flex flex-wrap gap-x-4 gap-y-1.5">
                   {NCR_AREAS.slice(0, 12).map((a) => (
-                    <Link key={a.slug} to={`/freelance-website-developer/${a.slug}`} className="text-xs text-ink/45 hover:text-brand link-underline">{a.city}</Link>
+                    <Link key={a.slug} to={`/freelancer-website-developer/${a.slug}`} className="text-xs text-ink/45 hover:text-brand link-underline">{a.city}</Link>
                   ))}
                 </div>
               </Reveal>
@@ -251,7 +254,7 @@ export default function Home() {
         <Reveal><p className="overline">/ 001 — How I work</p></Reveal>
         <Reveal delay={0.05}>
           <h2 className="mt-5 max-w-3xl font-heading font-extrabold tracking-tighter text-4xl sm:text-5xl lg:text-6xl leading-[0.95]">
-            A senior craftsman who happens to freelance.
+            A senior craftsman who happens to freelancer.
           </h2>
         </Reveal>
         <div className="mt-16 grid md:grid-cols-3 gap-px bg-line border border-line rounded-2xl overflow-hidden">
@@ -590,7 +593,7 @@ export default function Home() {
             </div>
           </Reveal>
           <Reveal delay={0.2}>
-            <img src={ABOUT_IMG} alt="Rajeev, senior freelance engineer and consultant" loading="lazy" decoding="async" className="mt-10 rounded-2xl border border-line w-full max-w-sm object-cover aspect-[4/3]" />
+            <img src={ABOUT_IMG} alt="Rajeev, senior freelancer, engineer and consultant" loading="lazy" decoding="async" className="mt-10 rounded-2xl border border-line w-full max-w-sm object-cover aspect-[4/3]" />
           </Reveal>
         </div>
         <Reveal delay={0.1}>

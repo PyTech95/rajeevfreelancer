@@ -9,7 +9,7 @@ export default function Contact() {
     <div>
       <Seo
         title="Contact & Book a Free Consultation | Rajeev Freelancer"
-        description="Book a free consultation with Rajeev — senior freelance engineer & AI/digital marketing consultant. WhatsApp, email or the form. Average response under 30 minutes."
+        description="Book a free consultation with Rajeev — senior freelancer & AI/digital marketing consultant. WhatsApp, email or the form. Average response under 30 minutes."
         path="/contact"
       />
       <section className="mx-auto max-w-[1400px] px-5 md:px-10 pt-32 md:pt-40 pb-20 grid lg:grid-cols-2 gap-14 items-start">

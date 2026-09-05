@@ -14,20 +14,20 @@ const NCR_REVIEWS = [
 
 // Exact-match local keyword anchors -> the matching programmatic location pages (strong internal linking).
 const POPULAR_SEARCHES = [
-  { label: "Freelance web developer in Gurgaon", to: "/freelance-website-developer/gurgaon-india" },
-  { label: "SEO expert in Noida", to: "/freelance-seo-expert/noida-india" },
-  { label: "App developer in Delhi", to: "/freelance-app-developer/delhi-india" },
-  { label: "Digital marketing consultant in Faridabad", to: "/freelance-digital-marketing-consultant/faridabad-india" },
-  { label: "AI consultant in Ghaziabad", to: "/freelance-ai-consultant/ghaziabad-india" },
+  { label: "Freelancer web developer in Gurgaon", to: "/freelancer-website-developer/gurgaon-india" },
+  { label: "SEO expert in Noida", to: "/freelancer-seo-expert/noida-india" },
+  { label: "App developer in Delhi", to: "/freelancer-app-developer/delhi-india" },
+  { label: "Digital marketing consultant in Faridabad", to: "/freelancer-digital-marketing-consultant/faridabad-india" },
+  { label: "AI consultant in Ghaziabad", to: "/freelancer-ai-consultant/ghaziabad-india" },
   { label: "WhatsApp marketing in Gurgaon", to: "/whatsapp-marketing-freelancer/gurgaon-india" },
-  { label: "Website developer in Greater Noida", to: "/freelance-website-developer/greater-noida-india" },
-  { label: "SEO expert in Delhi", to: "/freelance-seo-expert/delhi-india" },
-  { label: "Software developer in Noida", to: "/freelance-software-developer/noida-india" },
-  { label: "App developer in Gurgaon", to: "/freelance-app-developer/gurgaon-india" },
+  { label: "Website developer in Greater Noida", to: "/freelancer-website-developer/greater-noida-india" },
+  { label: "SEO expert in Delhi", to: "/freelancer-seo-expert/delhi-india" },
+  { label: "Software developer in Noida", to: "/freelancer-software-developer/noida-india" },
+  { label: "App developer in Gurgaon", to: "/freelancer-app-developer/gurgaon-india" },
 ];
 
 const NCR_FAQS = [
-  { q: "Who is the best freelance web developer in Delhi NCR?", a: "Rajeev is a senior freelance engineer and consultant with 12+ years of experience (ex-IOG, Accenture, Google), serving Delhi, Gurgaon, Noida, Greater Noida, Faridabad and Ghaziabad. You work with him directly — no agency, no junior staff." },
+  { q: "Who is the best web development freelancer in Delhi NCR?", a: "Rajeev is a senior freelancer and consultant with 12+ years of experience (ex-IOG, Accenture, Google), serving Delhi, Gurgaon, Noida, Greater Noida, Faridabad and Ghaziabad. You work with him directly — no agency, no junior staff." },
   { q: "How fast can you deliver a website in Delhi NCR?", a: "A standard business website starts at ₹4,999 with same-day delivery. Mobile apps start at ₹9,999 and are typically ready within a week. Every project begins with a free consultation and a fixed-scope quote." },
   { q: "Do you meet clients in person in Gurgaon or Noida?", a: "Most work is delivered remotely with fast WhatsApp communication, but being based in the NCR, in-person or video calls for Gurgaon, Noida, Delhi and nearby areas can be arranged when needed." },
   { q: "Which services do you offer across Delhi NCR?", a: "Website & app development, SEO and GEO (AI-search) optimisation, Google Ads and digital marketing, AI chatbots and automation, plus WhatsApp and SMS marketing — for businesses across all of Delhi NCR." },
@@ -41,7 +41,7 @@ export default function DelhiNCR() {
       city: "Delhi NCR",
       country: "India",
       path,
-      name: "Freelance web, app, SEO & marketing services across Delhi NCR",
+      name: "Freelancer web, app, SEO & marketing services across Delhi NCR",
       areaServed: ["Delhi", "Gurgaon", "Noida", "Greater Noida", "Faridabad", "Ghaziabad"],
       reviews: NCR_REVIEWS,
     }),
@@ -55,8 +55,8 @@ export default function DelhiNCR() {
   return (
     <div>
       <Seo
-        title="Freelance Web, App, SEO & Marketing Services in Delhi NCR | Rajeev"
-        description="Senior freelance web & app developer, SEO expert and digital marketer serving Delhi, Gurgaon, Noida, Faridabad & Ghaziabad. Websites from ₹4,999, same-day delivery. Free quote."
+        title="Freelancer Web, App, SEO & Marketing Services in Delhi NCR | Rajeev"
+        description="Senior freelancer web & app developer, SEO expert and digital marketer serving Delhi, Gurgaon, Noida, Faridabad & Ghaziabad. Websites from ₹4,999, same-day delivery. Free quote."
         path={path}
         jsonLd={jsonLd}
       />

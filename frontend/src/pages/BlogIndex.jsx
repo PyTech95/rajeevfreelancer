@@ -17,7 +17,7 @@ export default function BlogIndex() {
 
   return (
     <div>
-      <Seo title="Insights, Case Studies & Articles | Rajeev Freelancer" description="Practical articles and case studies on SEO, GEO, AI automation, web development and growth — written by Rajeev, a senior freelance consultant." path="/blog" />
+      <Seo title="Insights, Case Studies & Articles | Rajeev Freelancer" description="Practical articles and case studies on SEO, GEO, AI automation, web development and growth — written by Rajeev, a senior freelancer consultant." path="/blog" />
       <section className="mx-auto max-w-[1400px] px-5 md:px-10 pt-32 md:pt-40 pb-10">
         <p className="overline">/ Insights</p>
         <h1 className="mt-5 max-w-3xl font-heading font-extrabold tracking-tighter text-5xl sm:text-6xl lg:text-[4.4rem] leading-[0.9]">Notes on SEO, AI &amp; growth.</h1>

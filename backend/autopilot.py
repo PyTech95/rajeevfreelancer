@@ -27,7 +27,7 @@ logger = logging.getLogger("rajeevfreelancer.autopilot")
 ctx: dict = {}  # filled by setup(): db, slug, llm_gate, put_object, get_object, ping_indexnow, get_site, services, cities
 
 TOPIC_CLUSTERS = [
-    "Freelance app development", "Android and iOS development", "React Native development", "Website development",
+    "Freelancer app development", "Android and iOS development", "React Native development", "Website development",
     "React and WordPress development", "Custom software development", "SEO consulting", "Local SEO", "Technical SEO",
     "Digital marketing", "AI consulting", "Business automation", "WhatsApp marketing and automation", "SMS marketing",
     "E-commerce development", "Service + location (Gurgaon, Delhi NCR, India, Dubai, London, Singapore, Australia, USA)",
@@ -214,7 +214,7 @@ async def choose_topic(ap: dict, corpus: list, run: dict) -> dict:
     recent_clusters = [p.get("cluster") for p in corpus[:10] if p.get("cluster")]
     underused = [c for c in TOPIC_CLUSTERS if recent_clusters.count(c) == 0][:8] or TOPIC_CLUSTERS
     existing = [p["title"] for p in corpus[:150]]
-    prompt = f"""Propose 6 fresh blog topics for rajeevfreelancer.com (Rajeev: senior freelance engineer & consultant — apps, websites, SEO, digital marketing, AI automation, WhatsApp/SMS marketing; based in Gurgaon/Delhi NCR, serving India, Dubai, London, Singapore, Australia, USA).
+    prompt = f"""Propose 6 fresh blog topics for rajeevfreelancer.com (Rajeev: senior freelancer & consultant — apps, websites, SEO, digital marketing, AI automation, WhatsApp/SMS marketing; based in Gurgaon/Delhi NCR, serving India, Dubai, London, Singapore, Australia, USA).
 Prefer these under-covered clusters: {json.dumps(underused)}.
 Allowed categories: {json.dumps(ap.get('categories') or DEFAULT_CATEGORIES)}.
 Exclude anything about: {json.dumps(ap.get('excluded_keywords') or [])}.
@@ -265,7 +265,7 @@ async def generate_article(topic: dict, ap: dict, corpus: list, run: dict) -> di
     inv_text = "\n".join(f"- {u} ({label})" for u, label in inventory)
     prompt = f"""Write an original, practical blog article for rajeevfreelancer.com.
 Topic: "{topic['topic']}". Primary keyword: "{topic.get('primary_keyword') or topic['topic']}". Cluster: {topic.get('cluster', '')}.
-Audience: SMB owners, founders and marketing leads. Author: Rajeev, a senior freelance engineer & consultant (Gurgaon / Delhi NCR, works worldwide).
+Audience: SMB owners, founders and marketing leads. Author: Rajeev, a senior freelancer & consultant (Gurgaon / Delhi NCR, works worldwide).
 Allowed categories: {json.dumps(ap.get('categories') or DEFAULT_CATEGORIES)}.
 
 Requirements:

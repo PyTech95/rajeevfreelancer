@@ -26,8 +26,8 @@ export default function CountryPage() {
   return (
     <div>
       <Seo
-        title={`Freelance Web, SEO, AI & Marketing Services in ${country.name} | Rajeev Freelancer`}
-        description={`Hire Rajeev for freelance web development, SEO, AI automation and digital marketing across ${country.name}. Senior-only, remote, fast WhatsApp support.`}
+        title={`Freelancer Web, SEO, AI & Marketing Services in ${country.name} | Rajeev Freelancer`}
+        description={`Hire Rajeev for freelancer web development, SEO, AI automation and digital marketing across ${country.name}. Senior-only, remote, fast WhatsApp support.`}
         path={`/locations/${country.slug}`}
       />
       <section className="mx-auto max-w-[1400px] px-5 md:px-10 pt-32 md:pt-40 pb-14">

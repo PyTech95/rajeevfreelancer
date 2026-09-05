@@ -60,6 +60,32 @@ Not a plain portfolio — a mature freelance marketing platform (rajeevfreelance
   PageSpeed/AIOSEO scores, backlink building, formal usability testing,
   WCAG audit + accessibility statement.
 
+## Session 2026-09-05 (cont.2) — "freelancer" keyword switch + US/UK/DE strategy
+- [x] KEYWORD SWITCH (user directive: "freelancer" not "freelance", everywhere):
+  service names/keywords rewritten (SEO Freelancer, Digital Marketing Freelancer,
+  Website Development Freelancer, App Development Freelancer, Software Development
+  Freelancer, AI Freelancer); slugs renamed freelance-* -> freelancer-* (frontend +
+  backend + case seeds consistent). Word-boundary scripted replace across 28 files.
+  Legacy redirects: LEGACY_SERVICE_MAP + RENAMED_SERVICES (site.js) with Navigate
+  redirects in ServiceHub + LocationPage so all old indexed URLs keep working.
+  Startup migration (in _reslug_content): drops cached location_pages with old
+  slugs (dropped 655; regenerate on demand) + repoints case_studies.services.
+  Stored site settings title/desc confirmed showing new freelancer phrasing.
+- [x] REGIONAL PAGES /us /uk /de (data/regions.js + pages/RegionLanding.jsx):
+  US = en-US, ROI copy, "Get a Free Quote Now", NO WhatsApp CTA; UK = en-GB,
+  partnership/"bespoke", WhatsApp shown; DE = full German, formal Sie, DSGVO +
+  Impressum focus, no WhatsApp. Each: FAQ + Breadcrumb schema, en-US/en-GB/de/
+  x-default hreflang cluster, region city links, footer links, sitemap entries.
+- [x] Regional blog seeds: ADA compliance (US), UK GDPR post-Brexit, German
+  Impressum/DSGVO guide (German-language). Blog now 25 posts.
+- [x] Home hreflang cluster extended with en-US/en-GB/de.
+- Verified: /us + /de render (title/H1/CTA/hreflang correct), legacy redirect
+  /freelance-seo-expert -> /freelancer-seo-expert works, sitemap has region URLs,
+  warm-all retriggered with new slugs. Redeployed to production + prod warm retriggered.
+- NOTE (user's off-page todo from their strategy doc): directory listings (Yelp/BBB/
+  Yell/Gelbe Seiten), HARO/ResponseSource, LinkedIn/Xing profiles, GBP posts — these
+  are manual marketing actions, no code needed.
+
 ## Backlog / P0-P2
 - P0: Deploy via platform (in progress); post-deploy GSC sitemap submit + www redirect.
 - P1: Add RESEND_API_KEY / verify sending domain for lead + confirmation emails.

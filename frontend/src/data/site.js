@@ -14,12 +14,12 @@ export const waLink = (text) =>
 export const GOOGLE_PROFILE = "https://share.google/ddhGdf8R7JkjaWji3";
 
 export const SERVICES = [
-  { slug: "freelance-ai-consultant", name: "Freelance AI Consultant", short: "AI Consulting", tagline: "AI automation, bots, agents & workflow integrations", icon: "Bot" },
-  { slug: "freelance-digital-marketing-consultant", name: "Freelance Digital Marketing Consultant", short: "Digital Marketing", tagline: "Paid, organic & lifecycle growth engineered around revenue", icon: "TrendingUp" },
-  { slug: "freelance-seo-expert", name: "Freelance SEO Expert", short: "SEO Consulting", tagline: "Technical + content SEO that compounds into rankings", icon: "Search" },
-  { slug: "freelance-website-developer", name: "Freelance Website Developer", short: "Website Development", tagline: "WordPress & custom web apps built for speed and conversion", icon: "Code" },
-  { slug: "freelance-app-developer", name: "Freelance App Developer", short: "App Development", tagline: "iOS, Android & cross-platform mobile apps built to scale", icon: "Smartphone" },
-  { slug: "freelance-software-developer", name: "Freelance Software Developer", short: "Software Development", tagline: "Custom applications & production-grade software engineering", icon: "Terminal" },
+  { slug: "freelancer-ai-consultant", name: "AI Freelancer", short: "AI Consulting", tagline: "AI automation, bots, agents & workflow integrations", icon: "Bot" },
+  { slug: "freelancer-digital-marketing-consultant", name: "Digital Marketing Freelancer", short: "Digital Marketing", tagline: "Paid, organic & lifecycle growth engineered around revenue", icon: "TrendingUp" },
+  { slug: "freelancer-seo-expert", name: "SEO Freelancer", short: "SEO Consulting", tagline: "Technical + content SEO that compounds into rankings", icon: "Search" },
+  { slug: "freelancer-website-developer", name: "Website Development Freelancer", short: "Website Development", tagline: "WordPress & custom web apps built for speed and conversion", icon: "Code" },
+  { slug: "freelancer-app-developer", name: "App Development Freelancer", short: "App Development", tagline: "iOS, Android & cross-platform mobile apps built to scale", icon: "Smartphone" },
+  { slug: "freelancer-software-developer", name: "Software Development Freelancer", short: "Software Development", tagline: "Custom applications & production-grade software engineering", icon: "Terminal" },
   { slug: "whatsapp-marketing-freelancer", name: "WhatsApp Marketing Freelancer", short: "WhatsApp Marketing", tagline: "Campaigns, auto-replies, chatbots & lead nurturing", icon: "MessageCircle" },
   { slug: "sms-marketing-freelancer", name: "SMS Marketing Freelancer", short: "SMS Marketing", tagline: "Bulk SMS campaigns, OTP flows & automated journeys", icon: "Smartphone" },
 ];
@@ -58,12 +58,12 @@ export const NCR_AREAS = [
 // Marketing launch offers — punchy price + delivery highlights that drive enquiries.
 // Prices are localized: INR inside India, USD everywhere else.
 export const OFFERS = [
-  { icon: "Code", title: "Business Website", slug: "freelance-website-developer", inr: "4,999", usd: "99", unit: "", delivery: "Same-day delivery", tag: "Launch today" },
-  { icon: "Smartphone", title: "Mobile App", slug: "freelance-app-developer", inr: "9,999", usd: "399", unit: "", delivery: "Ready in 1 week", tag: "iOS & Android" },
-  { icon: "Search", title: "SEO That Ranks", slug: "freelance-seo-expert", inr: "6,999", usd: "129", unit: "/mo", delivery: "Results in 90 days", tag: "Google + AI search" },
-  { icon: "Bot", title: "AI Chatbot", slug: "freelance-ai-consultant", inr: "7,999", usd: "149", unit: "", delivery: "Live in 3 days", tag: "24/7 auto-replies" },
+  { icon: "Code", title: "Business Website", slug: "freelancer-website-developer", inr: "4,999", usd: "99", unit: "", delivery: "Same-day delivery", tag: "Launch today" },
+  { icon: "Smartphone", title: "Mobile App", slug: "freelancer-app-developer", inr: "9,999", usd: "399", unit: "", delivery: "Ready in 1 week", tag: "iOS & Android" },
+  { icon: "Search", title: "SEO That Ranks", slug: "freelancer-seo-expert", inr: "6,999", usd: "129", unit: "/mo", delivery: "Results in 90 days", tag: "Google + AI search" },
+  { icon: "Bot", title: "AI Chatbot", slug: "freelancer-ai-consultant", inr: "7,999", usd: "149", unit: "", delivery: "Live in 3 days", tag: "24/7 auto-replies" },
   { icon: "MessageCircle", title: "WhatsApp Marketing", slug: "whatsapp-marketing-freelancer", inr: "2,999", usd: "59", unit: "", delivery: "Go live in 24 hrs", tag: "Bulk + automation" },
-  { icon: "TrendingUp", title: "Google Ads", slug: "freelance-digital-marketing-consultant", inr: "9,999", usd: "199", unit: "/mo", delivery: "Leads from week 1", tag: "Fully managed" },
+  { icon: "TrendingUp", title: "Google Ads", slug: "freelancer-digital-marketing-consultant", inr: "9,999", usd: "199", unit: "/mo", delivery: "Leads from week 1", tag: "Fully managed" },
 ];
 
 // Returns { sym, amt, unit } for an offer based on visitor region.
@@ -130,4 +130,16 @@ export const ISO_CURRENCY = {
   IN: "INR", US: "USD", GB: "GBP", CA: "CAD", AU: "AUD", AE: "AED", SG: "SGD", NZ: "AUD",
   DE: "EUR", FR: "EUR", NL: "EUR", ES: "EUR", IT: "EUR", IE: "EUR", PT: "EUR", BE: "EUR",
   AT: "EUR", FI: "EUR", GR: "EUR", LU: "EUR",
+};
+
+
+// Service slugs renamed freelance-* -> freelancer-* (keyword strategy, 2026-09).
+// Old URLs redirect to the new ones so indexed links keep working.
+export const RENAMED_SERVICES = {
+  "freelance-ai-consultant": "freelancer-ai-consultant",
+  "freelance-digital-marketing-consultant": "freelancer-digital-marketing-consultant",
+  "freelance-seo-expert": "freelancer-seo-expert",
+  "freelance-website-developer": "freelancer-website-developer",
+  "freelance-app-developer": "freelancer-app-developer",
+  "freelance-software-developer": "freelancer-software-developer",
 };

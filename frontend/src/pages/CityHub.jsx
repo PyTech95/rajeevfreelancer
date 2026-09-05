@@ -12,12 +12,12 @@ import { localBusinessSchema, faqSchema, breadcrumbSchema } from "@/lib/siteConf
 
 // Map a service to a natural local search phrase for exact-match anchor text.
 const SEARCH_VERB = {
-  "freelance-website-developer": "Web developer",
-  "freelance-app-developer": "App developer",
-  "freelance-seo-expert": "SEO expert",
-  "freelance-digital-marketing-consultant": "Digital marketing consultant",
-  "freelance-ai-consultant": "AI consultant",
-  "freelance-software-developer": "Software developer",
+  "freelancer-website-developer": "Web developer",
+  "freelancer-app-developer": "App developer",
+  "freelancer-seo-expert": "SEO expert",
+  "freelancer-digital-marketing-consultant": "Digital marketing consultant",
+  "freelancer-ai-consultant": "AI consultant",
+  "freelancer-software-developer": "Software developer",
   "whatsapp-marketing-freelancer": "WhatsApp marketing",
   "sms-marketing-freelancer": "SMS marketing",
 };
@@ -33,7 +33,7 @@ export default function CityHub() {
       city: hub.name,
       country: "India",
       path,
-      name: `Freelance web, app, SEO & marketing services in ${hub.display}`,
+      name: `Freelancer web, app, SEO & marketing services in ${hub.display}`,
       areaServed: hub.areas.map((a) => a.city),
       reviews: hub.reviews,
     }),
@@ -53,8 +53,8 @@ export default function CityHub() {
   return (
     <div>
       <Seo
-        title={`Freelance Web, App, SEO & Marketing Services in ${hub.display} | Rajeev`}
-        description={`Senior freelance web & app developer, SEO expert and digital marketer in ${hub.display}. Websites from ₹4,999, same-day delivery. Free quote. Serving ${hub.region}.`}
+        title={`Freelancer Web, App, SEO & Marketing Services in ${hub.display} | Rajeev`}
+        description={`Senior freelancer web & app developer, SEO expert and digital marketer in ${hub.display}. Websites from ₹4,999, same-day delivery. Free quote. Serving ${hub.region}.`}
         path={path}
         jsonLd={jsonLd}
       />

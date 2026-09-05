@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowUpRight, MapPin, Check, Plus, Minus, MessageCircle, Loader2 } from "lucide-react";
 import Seo from "@/components/Seo";
@@ -7,7 +7,7 @@ import { Reveal, MaskLines } from "@/components/Reveal";
 import ContactForm from "@/components/ContactForm";
 import NotFound from "@/pages/NotFound";
 import { api } from "@/lib/api";
-import { SERVICES, waLink } from "@/data/site";
+import { SERVICES, waLink, RENAMED_SERVICES } from "@/data/site";
 import { localBusinessSchema, serviceSchema, faqSchema, breadcrumbSchema } from "@/lib/siteConfig";
 
 function Faq({ q, a, index }) {
@@ -56,6 +56,7 @@ export default function LocationPage() {
       .catch(() => setError(true));
   }, [serviceSlug, locSlug]);
 
+  if (RENAMED_SERVICES[serviceSlug]) return <Navigate to={`/${RENAMED_SERVICES[serviceSlug]}/${locSlug}`} replace />;
   if (error) return <NotFound />;
   if (!data) return <Skeleton />;
 

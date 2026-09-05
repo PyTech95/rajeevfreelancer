@@ -59,13 +59,16 @@ export default function Footer() {
               <ul className="space-y-2.5">
                 {FEATURED_CITIES.slice(0, 6).map((c) => (
                   <li key={c.loc_slug}>
-                    <Link to={`/freelance-seo-expert/${c.loc_slug}`} className="text-white/70 hover:text-white transition-colors">{c.city}</Link>
+                    <Link to={`/freelancer-seo-expert/${c.loc_slug}`} className="text-white/70 hover:text-white transition-colors">{c.city}</Link>
                   </li>
                 ))}
                 <li><Link to="/pricing" className="text-white/70 hover:text-white transition-colors">Pricing & Packages</Link></li>
                 <li><Link to="/free-quote" data-testid="footer-free-quote" className="text-white/70 hover:text-white transition-colors">Get a free quote</Link></li>
                 <li><Link to="/case-studies" className="text-white/70 hover:text-white transition-colors">Case studies</Link></li>
                 <li><Link to="/locations" className="text-brand hover:text-white transition-colors">All locations →</Link></li>
+                <li><Link to="/us" data-testid="footer-region-us" className="text-white/70 hover:text-white transition-colors">USA clients</Link></li>
+                <li><Link to="/uk" data-testid="footer-region-uk" className="text-white/70 hover:text-white transition-colors">UK clients</Link></li>
+                <li><Link to="/de" data-testid="footer-region-de" className="text-white/70 hover:text-white transition-colors">Deutschland</Link></li>
               </ul>
             </div>
             <div>
@@ -98,7 +101,7 @@ export default function Footer() {
         )}
 
         <div className="pt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-white/40 font-mono">
-          <span>© {new Date().getFullYear()} {settings?.seo?.site_name || "Rajeev Freelancer"} — Senior Freelance Engineer & AI/Digital Marketing Consultant.</span>
+          <span>© {new Date().getFullYear()} {settings?.seo?.site_name || "Rajeev Freelancer"} — Senior Freelancer & AI/Digital Marketing Consultant.</span>
           <span>Available worldwide · Based in {business.address || "Gurgaon, India"}</span>
         </div>
       </div>

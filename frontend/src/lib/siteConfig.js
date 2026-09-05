@@ -5,9 +5,9 @@
 export const SITE_DEFAULTS = {
   seo: {
     site_name: "Rajeev Freelancer",
-    default_title: "Rajeev Freelancer — Senior Freelance Engineer & AI/Digital Marketing Consultant",
+    default_title: "Rajeev Freelancer — Senior Freelancer & AI/Digital Marketing Consultant",
     default_description:
-      "Hire Rajeev — a senior freelance engineer & AI/digital marketing consultant with 12+ years' experience. Web development, software, SEO, AI automation & WhatsApp marketing. Available worldwide.",
+      "Hire Rajeev — a senior freelancer & AI/digital marketing consultant with 12+ years' experience. Web development, software, SEO, AI automation & WhatsApp marketing. Available worldwide.",
     og_image: "https://customer-assets-gfyr7b9c.emergentagent.net/job_rajeev-seo-hub/artifacts/whqtfhxo_image.png",
     canonical_domain: "https://www.rajeevfreelancer.com",
     twitter_handle: "@rajeevfreelancer",
@@ -148,9 +148,9 @@ export function personSchema() {
     "@id": `${base}/#rajeev`,
     name: c.business.founder_name || "Rajeev",
     alternateName: "Rajeev Freelancer",
-    jobTitle: "Senior Freelance Engineer & AI / Digital Marketing Consultant",
+    jobTitle: "Senior Freelancer Engineer & AI / Digital Marketing Consultant",
     description:
-      "Senior freelance engineer & AI/digital-marketing consultant with 12+ years' experience (ex-IOG, Accenture, Google). Web & software development, SEO, GEO, AI automation and WhatsApp marketing for businesses worldwide.",
+      "Senior freelancer & AI/digital-marketing consultant with 12+ years' experience (ex-IOG, Accenture, Google). Web & software development, SEO, GEO, AI automation and WhatsApp marketing for businesses worldwide.",
     image: c.business.logo,
     url: base,
     email: c.contact.email,

@@ -4,6 +4,51 @@ COVER = "https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1200&q=8
 
 BLOG_SEED = [
     {
+        "slug": "ada-compliance-ecommerce-guide-us",
+        "title": "ADA Compliance for E-commerce: A US Developer's Step-by-Step Guide",
+        "category": "Article",
+        "excerpt": "ADA website lawsuits keep rising in the US. Here's the practical, technical checklist that protects your store and improves UX for everyone.",
+        "cover_image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1200&q=80",
+        "tags": ["Compliance", "USA", "Web Development"],
+        "body": [
+            "If you sell to US customers, your website is considered a place of public accommodation under the Americans with Disabilities Act. E-commerce stores are the most-sued category — and small businesses are targeted precisely because they rarely have accessibility budgets. The good news: the fixes are mostly engineering discipline, not expensive redesigns.",
+            "Start with the WCAG 2.2 AA basics that plaintiffs' automated scanners flag first: missing alt text on product images, form inputs without labels, low-contrast text, and navigation that breaks without a mouse. Every one of these is a straightforward fix when your frontend is built on semantic HTML.",
+            "Next, test the way real users do. Keyboard-only through your checkout — if you can't complete a purchase with Tab and Enter alone, neither can a customer using a screen reader. Run a screen reader (NVDA is free) over your top five pages and listen for anything announced as just 'button' or 'link'.",
+            "The highest-risk area in e-commerce is the checkout and any third-party widgets you embed — chat popups, review carousels and marketing overlays routinely fail contrast and focus-trap rules. Audit what you embed, not just what you build.",
+            "Finally, publish an accessibility statement and a way to report issues. Courts view a documented, good-faith effort favorably, and customers view it as professionalism. As a freelancer who builds to WCAG by default, I treat accessibility as table stakes — it protects you legally and quietly improves conversion for every visitor.",
+        ],
+    },
+    {
+        "slug": "uk-gdpr-websites-post-brexit",
+        "title": "UK GDPR for Websites: What Actually Changed Post-Brexit",
+        "category": "Article",
+        "excerpt": "UK GDPR isn't EU GDPR with a flag swap. Here's what UK website owners must actually do — consent, cookies, and international data transfers explained plainly.",
+        "cover_image": "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&q=80",
+        "tags": ["Compliance", "UK", "Privacy"],
+        "body": [
+            "When the UK left the EU, it adopted its own version of the GDPR — the UK GDPR, sitting alongside the Data Protection Act 2018. For most website owners the obligations look identical, but the regulator is now the ICO (not an EU authority), and the details on international data transfers have quietly diverged.",
+            "The rules that matter for a typical business website haven't changed: no non-essential cookies before consent, a clear privacy notice, and a lawful basis for every form that collects personal data. If your cookie banner pre-ticks marketing consent or makes 'reject' harder to find than 'accept', you're not compliant — the ICO has said so explicitly.",
+            "Where post-Brexit differences bite is data leaving the UK. If you use US-hosted tools — analytics, CRMs, email platforms — you need the UK's International Data Transfer Agreement or the UK addendum to EU standard contractual clauses in place. It's paperwork most small sites have never done, and the ICO increasingly expects it.",
+            "Practically, here's my checklist for UK client builds: consent-first analytics that fire nothing until accepted, a cookie register in the privacy policy, DPIA-lite notes for anything touching customer data, and transfer agreements documented for every third-party processor in the stack.",
+            "None of this is expensive when it's part of the build from day one. It gets expensive when it's retrofitted after a complaint. If you're unsure where your site stands, a short audit will tell you — and it's usually a day of fixes, not a rebuild.",
+        ],
+    },
+    {
+        "slug": "impressum-dsgvo-leitfaden-websites",
+        "title": "Impressum & DSGVO: Der technische Leitfaden für Websites in Deutschland",
+        "category": "Article",
+        "excerpt": "Impressumspflicht, DSGVO-konforme Einwilligung und abmahnfeste Technik — was jede geschäftliche Website in Deutschland technisch richtig machen muss.",
+        "cover_image": "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1200&q=80",
+        "tags": ["DSGVO", "Deutschland", "Compliance"],
+        "body": [
+            "In Deutschland ist das Impressum keine Kür, sondern Pflicht: Nahezu jede geschäftliche Website braucht eine vollständige Anbieterkennzeichnung, die von jeder Seite aus mit maximal zwei Klicks erreichbar ist. Fehlt sie oder ist sie unvollständig, drohen Abmahnungen — und die kommen in Deutschland schnell.",
+            "Technisch heißt das: Das Impressum gehört als eigene, klar verlinkte Seite ins Impressum-Feld des Footers — nicht versteckt in den AGB, nicht als Bild eingebunden (Screenreader und Abmahn-Anwälte danken es Ihnen). Gleiches gilt für die Datenschutzerklärung, die jede Datenverarbeitung der Website konkret benennen muss.",
+            "Bei der DSGVO trennt sich die Spreu vom Weizen: Consent-Management bedeutet, dass vor der Einwilligung technisch keinerlei Tracking-Skripte, Cookies oder Dritt-Einbettungen geladen werden. Ein Cookie-Banner, der Google Analytics erst nach 'Ablehnen' blockiert, ist korrekt — einer, der alles lädt und erst nachträglich fragt, ist es nicht.",
+            "Besondere Vorsicht bei US-Diensten: Google Fonts vom Google-Server, YouTube-Embeds ohne Zwei-Klick-Lösung und US-gehostete Formulartools übertragen personenbezogene Daten (IP-Adressen) in Drittstaaten. Die sichere Variante: Fonts lokal hosten, Videos erst nach Klick laden, Formulare über EU-Server oder mit AVV abwickeln.",
+            "Als Freelancer setze ich Websites für den deutschen Markt von Anfang an datenschutzbewusst um: lokal gehostete Fonts, Consent-freies oder Consent-gesteuertes Tracking, dokumentierte Auftragsverarbeitung. Das ist kein Aufpreis-Feature, sondern Grundlage seriöser Entwicklung — und es schützt Sie vor den Abmahnungen, die sonst teuer werden.",
+        ],
+    },
+    {
         "slug": "seo-vs-geo-2026",
         "title": "SEO vs GEO in 2026: Why You Now Need Both",
         "category": "Article",
@@ -93,7 +138,7 @@ BLOG_SEED = [
         "category": "Blog",
         "excerpt": "When a senior freelancer beats an agency — and when it doesn't.",
         "cover_image": "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&q=80",
-        "tags": ["Freelance", "Business"],
+        "tags": ["Freelancer", "Business"],
         "body": [
             "The honest answer is: it depends on what you need. Agencies are built for scale and breadth; a senior freelancer is built for depth, speed and direct accountability.",
             "With an agency you often pay a premium for coordination, and your account may be handed to junior staff once the contract is signed. With a good freelancer, the person who sold you the work is the person doing it — every call, every deliverable.",

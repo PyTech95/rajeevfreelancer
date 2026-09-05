@@ -25,6 +25,7 @@ import BlogIndex from "@/pages/BlogIndex";
 import BlogPost from "@/pages/BlogPost";
 import Landing from "@/pages/Landing";
 import LangLanding from "@/pages/LangLanding";
+import RegionLanding from "@/pages/RegionLanding";
 import NotFound from "@/pages/NotFound";
 import Admin from "@/pages/Admin";
 
@@ -36,25 +37,32 @@ function ScrollTop() {
 
 // Legacy /services/:slug URLs (from the old site) -> current service pages, else /services.
 const LEGACY_SERVICE_MAP = {
-  "seo": "freelance-seo-expert",
-  "search-engine-optimization": "freelance-seo-expert",
-  "meta-ads": "freelance-digital-marketing-consultant",
-  "google-ads": "freelance-digital-marketing-consultant",
-  "ppc": "freelance-digital-marketing-consultant",
-  "digital-marketing": "freelance-digital-marketing-consultant",
-  "marketing": "freelance-digital-marketing-consultant",
-  "web-development": "freelance-website-developer",
-  "website": "freelance-website-developer",
-  "web-design": "freelance-website-developer",
-  "wordpress": "freelance-website-developer",
-  "app-development": "freelance-app-developer",
-  "mobile-app": "freelance-app-developer",
-  "app": "freelance-app-developer",
-  "software": "freelance-software-developer",
-  "software-development": "freelance-software-developer",
-  "ai": "freelance-ai-consultant",
-  "ai-automation": "freelance-ai-consultant",
-  "artificial-intelligence": "freelance-ai-consultant",
+  // Pre-rename slugs (freelance-* -> freelancer-*) — keep indexed URLs alive
+  "freelance-seo-expert": "freelancer-seo-expert",
+  "freelance-digital-marketing-consultant": "freelancer-digital-marketing-consultant",
+  "freelance-website-developer": "freelancer-website-developer",
+  "freelance-app-developer": "freelancer-app-developer",
+  "freelance-software-developer": "freelancer-software-developer",
+  "freelance-ai-consultant": "freelancer-ai-consultant",
+  "seo": "freelancer-seo-expert",
+  "search-engine-optimization": "freelancer-seo-expert",
+  "meta-ads": "freelancer-digital-marketing-consultant",
+  "google-ads": "freelancer-digital-marketing-consultant",
+  "ppc": "freelancer-digital-marketing-consultant",
+  "digital-marketing": "freelancer-digital-marketing-consultant",
+  "marketing": "freelancer-digital-marketing-consultant",
+  "web-development": "freelancer-website-developer",
+  "website": "freelancer-website-developer",
+  "web-design": "freelancer-website-developer",
+  "wordpress": "freelancer-website-developer",
+  "app-development": "freelancer-app-developer",
+  "mobile-app": "freelancer-app-developer",
+  "app": "freelancer-app-developer",
+  "software": "freelancer-software-developer",
+  "software-development": "freelancer-software-developer",
+  "ai": "freelancer-ai-consultant",
+  "ai-automation": "freelancer-ai-consultant",
+  "artificial-intelligence": "freelancer-ai-consultant",
   "whatsapp": "whatsapp-marketing-freelancer",
   "whatsapp-marketing": "whatsapp-marketing-freelancer",
   "sms": "sms-marketing-freelancer",
@@ -118,6 +126,9 @@ export default function App() {
         <Route path="/ar" element={<LangLanding lang="ar" />} />
         <Route path="/es" element={<LangLanding lang="es" />} />
         <Route path="/fr" element={<LangLanding lang="fr" />} />
+        <Route path="/us" element={<RegionLanding region="us" />} />
+        <Route path="/uk" element={<RegionLanding region="uk" />} />
+        <Route path="/de" element={<RegionLanding region="de" />} />
         <Route path="/*" element={<Site />} />
       </Routes>
     </BrowserRouter>

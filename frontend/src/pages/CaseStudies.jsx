@@ -36,7 +36,7 @@ export default function CaseStudies() {
     <div>
       <Seo
         title="Case Studies — Real Results with Numbers | Rajeev Freelancer"
-        description="See how Rajeev delivered 3× organic traffic, 80% faster support and +52% conversion. Real freelance web, SEO, AI and automation case studies with the numbers."
+        description="See how Rajeev delivered 3× organic traffic, 80% faster support and +52% conversion. Real freelancer web, SEO, AI and automation case studies with the numbers."
         path="/case-studies"
         jsonLd={jsonLd}
       />

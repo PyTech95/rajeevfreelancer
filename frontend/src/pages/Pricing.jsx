@@ -49,8 +49,8 @@ export default function Pricing() {
   return (
     <div>
       <Seo
-        title="Pricing & Packages — Freelance Web, SEO & AI | Rajeev Freelancer"
-        description="Transparent freelance pricing for web development, SEO, AI automation and WhatsApp marketing — shown in your local currency. Start with a free consultation."
+        title="Pricing & Packages — Freelancer Web, SEO & AI | Rajeev Freelancer"
+        description="Transparent freelancer pricing for web development, SEO, AI automation and WhatsApp marketing — shown in your local currency. Start with a free consultation."
         path="/pricing"
         jsonLd={jsonLd}
       />

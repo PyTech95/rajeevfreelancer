@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams, Link } from "react-router-dom";
+import { useParams, useSearchParams, Link, Navigate } from "react-router-dom";
 import { ArrowUpRight, MapPin, Loader2, Check, Star, Zap } from "lucide-react";
 import Seo from "@/components/Seo";
 import { Reveal, MaskLines } from "@/components/Reveal";
 import ContactForm from "@/components/ContactForm";
 import NotFound from "@/pages/NotFound";
 import { api } from "@/lib/api";
-import { SERVICES, STATS, waLink } from "@/data/site";
+import { SERVICES, STATS, waLink, RENAMED_SERVICES } from "@/data/site";
 import { SERVICE_CONTENT, SERVICE_PROCESS, SERVICE_IMAGES, TESTIMONIALS } from "@/data/serviceContent";
 import { CASE_STUDIES, fetchCaseStudies } from "@/data/caseStudies";
 import { serviceSchema, faqSchema, breadcrumbSchema } from "@/lib/siteConfig";
@@ -25,6 +25,7 @@ export default function ServiceHub() {
     api.get(`/service/${serviceSlug}`).then(({ data }) => setCountries(data.countries)).catch(() => setCountries([]));
   }, [serviceSlug, service]);
 
+  if (!service && RENAMED_SERVICES[serviceSlug]) return <Navigate to={`/${RENAMED_SERVICES[serviceSlug]}`} replace />;
   if (!service) return <NotFound />;
   const c = SERVICE_CONTENT[service.slug] || { hero: service.tagline, sub: service.tagline, benefits: [], deliverables: [], outcomes: [], faqs: [] };
   // Ad-campaign overrides: /service?headline=...&sub=...&cta=...  (match your ad copy)

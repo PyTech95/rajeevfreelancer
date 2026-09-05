@@ -19,7 +19,7 @@ export default function LocationsIndex() {
   return (
     <div>
       <Seo
-        title="Locations — A Freelance Consultant For Your City | Rajeev Freelancer"
+        title="Locations — A Freelancer Consultant For Your City | Rajeev Freelancer"
         description="Rajeev serves businesses in cities across Asia, Europe, the Middle East, Africa and the Americas. Find local web, SEO, AI and marketing help in your city."
         path="/locations"
       />

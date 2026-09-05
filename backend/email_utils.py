@@ -328,7 +328,7 @@ async def send_lead_confirmation(lead: dict) -> None:
             '<p style="margin:0 0 14px">In the meantime, if it is urgent, the fastest way to reach Rajeev is WhatsApp.</p>'
             '<p style="margin:0 0 4px">Talk soon,</p>'
             '<p style="margin:0;font-weight:bold">Rajeev</p>'
-            '<p style="margin:2px 0 0;color:#8A8A8E;font-size:12px">Senior Freelance Engineer &amp; AI / Digital Marketing Consultant</p>'
+            '<p style="margin:2px 0 0;color:#8A8A8E;font-size:12px">Senior Freelancer &amp; AI / Digital Marketing Consultant</p>'
             '</td></tr>'
             f'<tr><td style="padding:0 24px 26px"><a href="{SITE_URL}" '
             'style="display:inline-block;background:#141414;color:#fff;text-decoration:none;'

@@ -2,12 +2,12 @@
 // Shared process; unique intro / benefits / deliverables / outcomes / FAQs per service.
 
 export const SERVICE_IMAGES = {
-  "freelance-ai-consultant": "https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "freelance-digital-marketing-consultant": "https://images.pexels.com/photos/106344/pexels-photo-106344.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "freelance-seo-expert": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
-  "freelance-website-developer": "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
-  "freelance-app-developer": "https://images.pexels.com/photos/4132538/pexels-photo-4132538.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "freelance-software-developer": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+  "freelancer-ai-consultant": "https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "freelancer-digital-marketing-consultant": "https://images.pexels.com/photos/106344/pexels-photo-106344.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "freelancer-seo-expert": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+  "freelancer-website-developer": "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+  "freelancer-app-developer": "https://images.pexels.com/photos/4132538/pexels-photo-4132538.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "freelancer-software-developer": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
   "whatsapp-marketing-freelancer": "https://images.pexels.com/photos/46924/pexels-photo-46924.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "sms-marketing-freelancer": "https://images.pexels.com/photos/9898392/pexels-photo-9898392.jpeg?auto=compress&cs=tinysrgb&w=1200",
 };
@@ -32,7 +32,7 @@ export const SERVICE_PROCESS = [
 ];
 
 export const SERVICE_CONTENT = {
-  "freelance-ai-consultant": {
+  "freelancer-ai-consultant": {
     hero: "Put AI to work in your business — without the hype.",
     sub: "I design and ship practical AI: chatbots, agents and automations that qualify leads, answer customers and remove hours of repetitive work every week.",
     benefits: [
@@ -49,7 +49,7 @@ export const SERVICE_CONTENT = {
       { q: "How fast can we launch?", a: "A focused first automation is usually live within one to two weeks." },
     ],
   },
-  "freelance-digital-marketing-consultant": {
+  "freelancer-digital-marketing-consultant": {
     hero: "Marketing engineered around revenue, not vanity metrics.",
     sub: "Paid, organic and lifecycle growth that ties every rupee or dollar back to leads and sales — run by one senior consultant, accountable to you.",
     benefits: [
@@ -66,7 +66,7 @@ export const SERVICE_CONTENT = {
       { q: "How do you report results?", a: "Simple, honest dashboards tied to leads and revenue — not screenshots of impressions." },
     ],
   },
-  "freelance-seo-expert": {
+  "freelancer-seo-expert": {
     hero: "Rank on Google — and get cited by AI.",
     sub: "Technical + content SEO that compounds into durable rankings, plus GEO so ChatGPT, Gemini and Google's AI Overviews recommend you by name.",
     benefits: [
@@ -83,7 +83,7 @@ export const SERVICE_CONTENT = {
       { q: "Do you do local SEO?", a: "Yes — Google Business Profile, local pages and structured data for businesses serving specific areas." },
     ],
   },
-  "freelance-website-developer": {
+  "freelancer-website-developer": {
     hero: "Websites built for speed, ranking and conversion.",
     sub: "WordPress or custom web apps that load fast, look sharp and turn visitors into enquiries — engineered, not just designed.",
     benefits: [
@@ -100,7 +100,7 @@ export const SERVICE_CONTENT = {
       { q: "Do you handle hosting?", a: "I'll set up fast, reliable hosting and hand over full ownership and documentation." },
     ],
   },
-  "freelance-app-developer": {
+  "freelancer-app-developer": {
     hero: "Mobile apps your customers actually want to use.",
     sub: "iOS, Android and cross-platform apps — designed, built and shipped by a senior engineer, from idea to the app stores.",
     benefits: [
@@ -117,7 +117,7 @@ export const SERVICE_CONTENT = {
       { q: "Can you continue an existing app?", a: "Absolutely — I regularly take over, fix and extend existing mobile apps." },
     ],
   },
-  "freelance-software-developer": {
+  "freelancer-software-developer": {
     hero: "Custom software that fits your business exactly.",
     sub: "Production-grade applications, internal tools and integrations — engineered by a senior developer who has shipped at scale.",
     benefits: [

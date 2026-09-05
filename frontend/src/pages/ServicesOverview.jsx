@@ -29,7 +29,7 @@ export default function ServicesOverview() {
     <div>
       <Seo
         title="Services — Web, Software, SEO, AI & WhatsApp Marketing | Rajeev Freelancer"
-        description="Explore Rajeev's freelance services: website development, custom software, SEO, digital marketing, AI automation and WhatsApp marketing — delivered senior-only, worldwide."
+        description="Explore Rajeev's freelancer services: website development, custom software, SEO, digital marketing, AI automation and WhatsApp marketing — delivered senior-only, worldwide."
         path="/services"
         jsonLd={jsonLd}
       />

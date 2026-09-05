@@ -45,21 +45,21 @@ export default function About() {
   return (
     <div>
       <Seo
-        title="About Rajeev — Senior Freelance Engineer & Consultant | Rajeev Freelancer"
-        description="12+ years in production. Ex-IOG, Accenture and Google. Six years independent. Meet Rajeev, a senior freelance engineer & AI/digital marketing consultant available worldwide."
+        title="About Rajeev — Senior Freelancer Engineer & Consultant | Rajeev Freelancer"
+        description="12+ years in production. Ex-IOG, Accenture and Google. Six years independent. Meet Rajeev, a senior freelancer & AI/digital marketing consultant available worldwide."
         path="/about"
         jsonLd={jsonLd}
       />
       <section className="mx-auto max-w-[1400px] px-5 md:px-10 pt-32 md:pt-40 pb-16">
         <p className="overline">/ About Rajeev</p>
         <h1 className="mt-6 max-w-4xl font-heading font-extrabold tracking-tighter text-5xl sm:text-6xl lg:text-[5rem] leading-[0.9]">
-          <MaskLines lines={["A senior craftsman", "who happens", "to freelance."]} />
+          <MaskLines lines={["A senior craftsman", "who happens", "to freelancer."]} />
         </h1>
       </section>
 
       <section className="mx-auto max-w-[1400px] px-5 md:px-10 pb-20 grid lg:grid-cols-12 gap-10 items-start">
         <Reveal className="lg:col-span-5">
-          <img src={ABOUT_IMG} alt="Rajeev, senior freelance engineer and consultant" decoding="async" fetchPriority="high" className="w-full rounded-2xl border border-line object-cover aspect-[4/5]" />
+          <img src={ABOUT_IMG} alt="Rajeev, senior freelancer, engineer and consultant" decoding="async" fetchPriority="high" className="w-full rounded-2xl border border-line object-cover aspect-[4/5]" />
         </Reveal>
         <Reveal delay={0.1} className="lg:col-span-7">
           <p className="text-xl md:text-2xl font-heading tracking-tight leading-snug">
