@@ -11,11 +11,17 @@ from html import escape
 from html.parser import HTMLParser
 from urllib.parse import urlparse
 
+import httpx
 import resend
 from dotenv import load_dotenv
 
 load_dotenv()
 logger = logging.getLogger("rajeevfreelancer.email")
+
+# Emergent managed email proxy (constant — never from env, survives deployment).
+EMAIL_BASE_URL = "https://integrations.emergentagent.com"
+EMERGENT_EMAIL_KEY = os.environ.get("EMERGENT_EMAIL_KEY", "")
+EMAIL_REPLY_TO = os.environ.get("EMAIL_REPLY_TO", "")
 
 # EMAIL_PROVIDER: "gmail"/"smtp" (Gmail SMTP) or "resend".
 EMAIL_PROVIDER = os.environ.get("EMAIL_PROVIDER", "resend").lower()
@@ -179,10 +185,32 @@ async def send_email(*, to, subject: str, html: str, reply_to: str | None = None
             logger.error(f"SMTP send error: {e}")
             return None
 
+    # Emergent managed email proxy (preferred when provisioned)
+    if EMERGENT_EMAIL_KEY:
+        payload = {"to": recipients, "subject": subject, "html": html,
+                   "from_name": EMAIL_FROM_NAME}
+        rt = reply_to or EMAIL_REPLY_TO
+        if rt:
+            payload["contact_email"] = rt
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+                resp = await client.post(
+                    f"{EMAIL_BASE_URL}/api/v1/email/send",
+                    headers={"X-Email-Key": EMERGENT_EMAIL_KEY},
+                    json=payload,
+                )
+            resp.raise_for_status()
+            _last_error = None
+            return resp.json().get("id")
+        except Exception as e:
+            _last_error = f"Emergent email: {e}"
+            logger.error(f"Emergent email send error: {e}")
+            return None
+
     # Resend path
     if not RESEND_API_KEY:
-        _last_error = "No email provider configured (SMTP creds / RESEND_API_KEY)"
-        logger.warning("No email provider configured (SMTP creds / RESEND_API_KEY) — skipping email send")
+        _last_error = "No email provider configured (SMTP creds / RESEND_API_KEY / EMERGENT_EMAIL_KEY)"
+        logger.warning("No email provider configured — skipping email send")
         return None
     resend.api_key = RESEND_API_KEY
     params = {
@@ -248,18 +276,19 @@ async def notify_new_lead(lead: dict) -> None:
 
 
 def email_configured() -> bool:
-    if EMAIL_PROVIDER in ("gmail", "smtp"):
-        return bool(SMTP_USER and SMTP_PASSWORD)
-    return bool(RESEND_API_KEY)
+    if EMAIL_PROVIDER in ("gmail", "smtp") and SMTP_USER and SMTP_PASSWORD:
+        return True
+    return bool(EMERGENT_EMAIL_KEY or RESEND_API_KEY)
 
 
 def email_status() -> dict:
     return {
         "configured": email_configured(),
-        "provider": EMAIL_PROVIDER,
-        "sender": SMTP_USER if EMAIL_PROVIDER in ("gmail", "smtp") else SENDER_EMAIL,
+        "provider": "emergent" if EMERGENT_EMAIL_KEY else EMAIL_PROVIDER,
+        "sender": SMTP_USER if EMAIL_PROVIDER in ("gmail", "smtp") and SMTP_USER else ("emergent-managed" if EMERGENT_EMAIL_KEY else SENDER_EMAIL),
         "smtp_password_set": bool(SMTP_PASSWORD),
         "resend_key_set": bool(RESEND_API_KEY),
+        "emergent_key_set": bool(EMERGENT_EMAIL_KEY),
         "owner_emails": OWNER_EMAILS,
         "last_error": _last_error,
     }

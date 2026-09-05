@@ -32,6 +32,21 @@ Not a plain portfolio — a mature freelance marketing platform (rajeevfreelance
       posts, case studies list, lead create (200), admin JWT login + stats, sitemap.xml,
       homepage renders with kinetic hero.
 
+## Session 2026-09-05 (cont.) — Email alerts + warm-all
+- [x] EMAIL ALERTS LIVE: email_utils.py gained the Emergent managed email path
+      (EMERGENT_EMAIL_KEY + EMAIL_BASE_URL constant + httpx POST to
+      /api/v1/email/send, from_name=EMAIL_FROM_NAME, reply-to=EMAIL_REPLY_TO).
+      Priority: SMTP > Emergent managed > Resend. Verified: smoke send id
+      f2c9bd4b... + live lead fired BOTH owner alert (rajeev.gits@gmail.com) and
+      prospect confirmation (202 Accepted x2). Daily digest uses the same path.
+- [x] Warm ALL cities started: 1,800 pages (225 x 8) generating in background.
+- [x] WhatsApp alerts: VERIFIED wired — create_lead fires both notify_whatsapp_lead
+      (admin webhook path) and send_lead_whatsapp (Meta Cloud API via env). INACTIVE
+      until user adds credentials (admin Site Settings webhook, or WHATSAPP_* env vars).
+- [x] Search Console/GA4: admin fields confirmed ready — user to paste codes later.
+- [x] Warm ALL cities re-started (first run wiped by the backend env restart;
+      progress is in-process). Running: 1,800 pages, serial ~15-20s/page (hours).
+
 ## Backlog / P0-P2
 - P0: Deploy via platform (in progress); post-deploy GSC sitemap submit + www redirect.
 - P1: Add RESEND_API_KEY / verify sending domain for lead + confirmation emails.
