@@ -47,6 +47,19 @@ Not a plain portfolio — a mature freelance marketing platform (rajeevfreelance
 - [x] Warm ALL cities re-started (first run wiped by the backend env restart;
       progress is in-process). Running: 1,800 pages, serial ~15-20s/page (hours).
 
+- [x] Digest timing set: 09:00 Asia/Kolkata (was 07:00 UTC default).
+- [x] Email links point at live domain: backend REACT_APP_BACKEND_URL ->
+      https://rajeev-launch.emergent.host (SITE_URL in emails). LLM_CONCURRENCY 1->3
+      (verified 0 x 429s, ~3x faster warm-up). Redeployed; prod email live.
+- [x] GMAIL SMTP for enquiries (user-provided): EMAIL_PROVIDER=gmail,
+      SMTP_USER=er.freelancer07@gmail.com + app password in backend/.env.
+      Verified smtp-ok direct send + lead notify status "sent". Redeployed to prod
+      (prod status: smtp_password_set true, sender er.freelancer07@gmail.com).
+- [x] Production warm-all triggered (prod DB is separate from preview).
+- SEO audit report (user-pasted) recommendations logged to backlog: publish
+  PageSpeed/AIOSEO scores, backlink building, formal usability testing,
+  WCAG audit + accessibility statement.
+
 ## Backlog / P0-P2
 - P0: Deploy via platform (in progress); post-deploy GSC sitemap submit + www redirect.
 - P1: Add RESEND_API_KEY / verify sending domain for lead + confirmation emails.
