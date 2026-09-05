@@ -95,6 +95,30 @@ Not a plain portfolio — a mature freelance marketing platform (rajeevfreelance
       marketing&headline= ad variants. GA4/Ads conversion tracking still pending
       user IDs.
 
+- [x] OWNER ALERT INBOXES: OWNER_EMAIL now delivers every enquiry to THREE
+      addresses: rajeev.gits@gmail.com, rajeev.pytech@gmail.com,
+      b.rajeev90@gmail.com (verified: test lead notify = sent to all 3, smtp-ok).
+      Redeployed to production.
+- [ ] WhatsApp instant alerts: code path verified present (notify_whatsapp_lead
+      webhook + send_lead_whatsapp Meta Cloud API) but SKIPPED until credentials:
+      needs Meta Cloud API phone-number-id + access token + recipient numbers,
+      OR an automation webhook URL (Pabbly/Zapier/Make) pasted in admin settings.
+
+- [x] 3-INBOX DELIVERY LIVE ON PROD: owner_emails set via admin notifications
+      config (DB-persisted, survives restarts) — verified prod lead emailed to all
+      3 addresses (status sent). NOTE: deploy pipeline does NOT update existing
+      env var VALUES on redeploy (new keys land, changed values don't) — manage
+      OWNER_EMAIL/sender changes via Admin → Notifications, not .env, for prod.
+- [x] WhatsApp recipient prefilled (+919711623561) via admin config on preview +
+      prod. User pastes Phone Number ID + Access Token in Admin → Notifications →
+      WhatsApp card (fields + Send test alert button already exist).
+- [x] ADMIN PASSWORD CHANGE: POST /api/auth/change-password (min 8 chars, verifies
+      current, bcrypt) + ChangePassword card in admin dashboard (between
+      Notifications and SiteSettings). Startup seed now respects password_customized
+      flag so admin-set passwords survive restarts/redeploys. Verified: wrong-current
+      rejected, short rejected, change+login works, survives restart, reverted to
+      documented password. Live on prod (endpoint returns proper 400s).
+
 ## Backlog / P0-P2
 - P0: Deploy via platform (in progress); post-deploy GSC sitemap submit + www redirect.
 - P1: Add RESEND_API_KEY / verify sending domain for lead + confirmation emails.

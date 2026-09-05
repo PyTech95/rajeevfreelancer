@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { api, formatApiErrorDetail } from "@/lib/api";
 import SiteSettings from "@/pages/admin/SiteSettings";
 import Notifications from "@/pages/admin/Notifications";
+import ChangePassword from "@/pages/admin/ChangePassword";
 import SeoTools from "@/pages/admin/SeoTools";
 import BlogManager from "@/pages/admin/BlogManager";
 import CaseStudyManager from "@/pages/admin/CaseStudyManager";
@@ -241,6 +242,7 @@ function Dashboard() {
         )}
 
         <Notifications />
+        <ChangePassword />
         <SiteSettings />
         <SeoTools />
         <BlogManager />

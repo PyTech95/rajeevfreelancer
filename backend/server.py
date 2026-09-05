@@ -1255,6 +1255,24 @@ async def me(admin: dict = Depends(get_current_admin)):
     return admin
 
 
+class ChangePasswordInput(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@api_router.post("/auth/change-password")
+async def change_password(payload: ChangePasswordInput, admin: dict = Depends(get_current_admin)):
+    if len(payload.new_password) < 8:
+        raise HTTPException(status_code=400, detail="New password must be at least 8 characters")
+    user = await db.users.find_one({"email": admin["email"]})
+    if not user or not verify_password(payload.current_password, user["password_hash"]):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    await db.users.update_one({"email": admin["email"]},
+                              {"$set": {"password_hash": hash_password(payload.new_password), "password_customized": True}})
+    logger.info(f"Admin password changed for {admin['email']}")
+    return {"ok": True}
+
+
 # ---------------- Sitemap ----------------
 @api_router.get("/sitemap.xml")
 async def sitemap():
@@ -1442,7 +1460,7 @@ async def startup():
             "created_at": datetime.now(timezone.utc).isoformat(),
         })
         logger.info(f"Seeded admin {admin_email}")
-    elif not verify_password(admin_password, existing["password_hash"]):
+    elif not existing.get("password_customized") and not verify_password(admin_password, existing["password_hash"]):
         await db.users.update_one({"email": admin_email}, {"$set": {"password_hash": hash_password(admin_password)}})
         logger.info("Updated admin password")
     asyncio.create_task(_daily_digest_scheduler())
