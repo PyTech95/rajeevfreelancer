@@ -1,16 +1,28 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { ArrowUpRight, Globe } from "lucide-react";
 import { waLink, CONTACT, SERVICES } from "@/data/site";
 import { REGIONS, REGION_LIST } from "@/data/regions";
 import { canonicalBase, faqSchema, breadcrumbSchema } from "@/lib/siteConfig";
+import { api } from "@/lib/api";
+
+const REGION_COUNTRY = { us: "USA", uk: "UK", de: "Germany" };
 
 export default function RegionLanding({ region: propRegion }) {
   const { region: paramRegion } = useParams();
   const code = propRegion || paramRegion;
   const t = REGIONS[code];
   const base = canonicalBase();
+  const [cities, setCities] = useState(t ? t.cities : []);
+
+  useEffect(() => {
+    if (!t) return;
+    api.get("/locations").then((r) => {
+      const group = (r.data?.countries || []).find((c) => c.name === REGION_COUNTRY[code]);
+      if (group?.cities?.length) setCities(group.cities.map((c) => ({ city: c.city, loc: c.loc_slug })));
+    }).catch(() => {});
+  }, [code]);
 
   useEffect(() => {
     if (t) document.documentElement.lang = t.htmlLang;
@@ -109,7 +121,7 @@ export default function RegionLanding({ region: propRegion }) {
           </div>
           <h3 className="mt-16 font-heading font-extrabold tracking-tighter text-2xl">{t.cities_title}</h3>
           <div className="mt-6 flex flex-wrap gap-2">
-            {t.cities.map((c) => (
+            {cities.map((c) => (
               <Link key={c.loc} to={`/freelancer-seo-expert/${c.loc}`} data-testid={`region-city-${c.loc}`} className="rounded-full border border-line px-4 py-2 text-sm text-ink/70 hover:border-ink hover:text-ink transition-colors">{c.city}</Link>
             ))}
           </div>

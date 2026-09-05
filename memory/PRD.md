@@ -86,6 +86,15 @@ Not a plain portfolio — a mature freelance marketing platform (rajeevfreelance
   Yell/Gelbe Seiten), HARO/ResponseSource, LinkedIn/Xing profiles, GBP posts — these
   are manual marketing actions, no code needed.
 
+- [x] EXPANSION (follow-up): UK 7->19 cities, Germany 5->16 cities (248 total,
+      1,984 location pages); RegionLanding lists all country cities dynamically
+      from /api/locations. 4 German blog posts added (blog: 29). US case study
+      "SaaS Website Rebuild: +41% conversions" created via admin API (Challenge/
+      Solution/Results format, region USA, order 1). Google Ads landing /free-quote
+      verified consistent with freelancer phrasing; supports ?focus=website|app|
+      marketing&headline= ad variants. GA4/Ads conversion tracking still pending
+      user IDs.
+
 ## Backlog / P0-P2
 - P0: Deploy via platform (in progress); post-deploy GSC sitemap submit + www redirect.
 - P1: Add RESEND_API_KEY / verify sending domain for lead + confirmation emails.
