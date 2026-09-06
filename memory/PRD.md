@@ -128,6 +128,18 @@ Not a plain portfolio — a mature freelance marketing platform (rajeevfreelance
       ID + Access Token in Admin → Notifications, (b) set site_url override,
       (c) submit sitemap in GSC for the real domain.
 
+- [x] PRICING REMOVED (user directive 2026-09-06): all price figures stripped
+      from pages/copy/meta/FAQs (Home, DelhiNCR, CityHub, cityHubs.js, Landing
+      FAQ). /pricing rewritten as a no-numbers "No price lists. Fixed written
+      quotes." page (engagement models + FAQ, CTA to /free-quote). Prices remain
+      ONLY in the admin-controlled launch offers (OffersStrip + exit popup,
+      toggled by settings.marketing.offers_enabled). German blog posts sanitized
+      (no Euro figures) in seed + BOTH DBs (preview via Mongo, prod via admin PUT).
+      Budget field: already free-text; placeholder now "Your budget (optional) —
+      any amount: 5k, $500, ₹5,000…" (accepts any input). Verified: 0 price
+      figures on /pricing + /contact; home prices only in offers strip.
+      Prod bundle confirmed updated.
+
 ## Backlog / P0-P2
 - P0: Deploy via platform (in progress); post-deploy GSC sitemap submit + www redirect.
 - P1: Add RESEND_API_KEY / verify sending domain for lead + confirmation emails.

@@ -1,138 +1,120 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Check, ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowUpRight, MessageCircle, Check, ShieldCheck, PenLine, Rocket } from "lucide-react";
 import Seo from "@/components/Seo";
 import { Reveal, MaskLines } from "@/components/Reveal";
-import ContactForm from "@/components/ContactForm";
-import { useCurrency } from "@/hooks/useCurrency";
 import { waLink } from "@/data/site";
-import { faqSchema, breadcrumbSchema } from "@/lib/siteConfig";
 
-const PRICING_FAQS = [
-  { q: "How much does it cost to hire a freelancer like Rajeev?", a: "Fixed-scope projects typically start around the Launch tier (a sharp site or funnel) and scale up for custom builds, software and ongoing growth. Every quote is fixed in writing after a free consultation, so there are no surprises." },
-  { q: "Why are prices shown in my local currency?", a: "Prices are anchored in INR and converted live at current exchange rates to the currency detected for your location, so you see a realistic figure instantly. Your final quote is fixed in your own currency." },
-  { q: "What's included in a fixed-scope package?", a: "Each package lists exactly what you get — design, build, SEO setup, automation and support as applicable. Scope, timeline and deliverables are agreed up front and put in writing before any work starts." },
-  { q: "Do you offer monthly retainers?", a: "Yes. Beyond one-off projects, the Scale tier and custom retainers cover ongoing SEO, GEO, paid growth, automation and support with monthly strategy and reporting." },
-  { q: "Is there a free consultation?", a: "Yes — every engagement begins with a free consultation to understand your goals and recommend the fastest path to ROI, followed by a written, fixed-price proposal." },
-  { q: "What if my project doesn't fit a package?", a: "Most projects are scoped bespoke. Share what you're building on WhatsApp or the contact form and you'll get a tailored, fixed-price proposal — usually within the hour." },
+const PATH = "/pricing";
+
+const MODELS = [
+  {
+    icon: Rocket,
+    title: "One-time build",
+    desc: "Websites, apps and custom software — scoped once, quoted once, delivered on time.",
+    points: ["Fixed-scope written quote before work starts", "Milestone-based payments", "You own everything: code, content, accounts"],
+  },
+  {
+    icon: ShieldCheck,
+    title: "Monthly growth",
+    desc: "SEO, GEO and Google Ads management that compounds month after month.",
+    points: ["Clear monthly scope, no retainers-without-work", "Reported in numbers: traffic, leads, revenue", "Pause or scale any month"],
+  },
+  {
+    icon: PenLine,
+    title: "AI automation",
+    desc: "Workflow automation scoped around the hours it saves you — quoted per workflow or as a package.",
+    points: ["Starts with a free process audit", "Payback period estimated in the proposal", "Documentation and handover included"],
+  },
 ];
 
-const TIERS = [
-  {
-    name: "Launch", inr: 9900, cadence: "project",
-    tagline: "For a sharp, fast site or landing funnel.",
-    features: ["1–5 page website or landing funnel", "Mobile-first, SEO-ready build", "Contact form + WhatsApp", "Basic on-page SEO", "1 round of revisions", "Delivery in ~1–2 weeks"],
-  },
-  {
-    name: "Growth", inr: 30000, cadence: "project", featured: true,
-    tagline: "Custom build + marketing engine to compound.",
-    features: ["Custom website or web app", "Technical + content SEO setup", "AI automation / chatbot integration", "WhatsApp marketing setup", "Analytics + conversion tracking", "Priority WhatsApp support"],
-  },
-  {
-    name: "Scale", inr: 120000, cadence: "project",
-    tagline: "Full software + growth partnership.",
-    features: ["Custom software / platform build", "Ongoing SEO & paid growth", "Advanced AI workflows & agents", "Lifecycle & WhatsApp automation", "Monthly strategy + reporting", "Senior, hands-on partnership"],
-  },
+const FAQS = [
+  { q: "How much does a project cost?", a: "It depends on scope — that's the honest answer. Share what you're building and you'll receive a fixed, written quote after a free consultation, before any work begins. No ranges published, no surprises later." },
+  { q: "Why is there no price list on this site?", a: "Because a serious price depends on what you're actually building: pages, features, integrations, content, languages. A public price list either overcharges simple projects or underquotes complex ones. A fixed written quote is fairer to both sides." },
+  { q: "Is the consultation really free?", a: "Yes — a 20-minute call to understand your goals and recommend the fastest path to results, followed by a written proposal. No sales pressure, no obligation." },
+  { q: "Which currency do you bill in?", a: "Yours. Quotes are issued in INR, USD, GBP or EUR and fixed in writing, so exchange rates never move your price mid-project." },
+  { q: "What if my project doesn't fit a standard scope?", a: "Most projects are bespoke. Send your brief on WhatsApp or the contact form and you'll get a tailored, fixed-price proposal — usually within the hour." },
 ];
 
 export default function Pricing() {
-  const { currency, detected, price, ready } = useCurrency();
-
-  const jsonLd = [
-    breadcrumbSchema([
-      { name: "Home", path: "" },
-      { name: "Pricing", path: "/pricing" },
-    ]),
-    faqSchema(PRICING_FAQS),
-  ];
-
   return (
-    <div>
+    <div data-testid="pricing-page">
       <Seo
-        title="Pricing & Packages — Freelancer Web, SEO & AI | Rajeev Freelancer"
-        description="Transparent freelancer pricing for web development, SEO, AI automation and WhatsApp marketing — shown in your local currency. Start with a free consultation."
-        path="/pricing"
-        jsonLd={jsonLd}
+        title="Pricing & Engagement Models | Rajeev Freelancer"
+        description="No public price lists — every project gets a fixed, written quote in your currency after a free consultation. Web, app, SEO and AI automation, worldwide."
+        path={PATH}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: FAQS.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
+        }}
       />
-      <section className="mx-auto max-w-[1400px] px-5 md:px-10 pt-32 md:pt-40 pb-8">
-        <p className="overline">/ Pricing & Packages</p>
-        <h1 className="mt-6 max-w-4xl font-heading font-extrabold tracking-tighter text-5xl sm:text-6xl lg:text-[5rem] leading-[0.9]">
-          <MaskLines lines={["Clear pricing.", <>No <span className="text-shimmer">surprises.</span></>]} />
-        </h1>
-        <p className="mt-8 max-w-2xl text-lg text-ink/70 leading-relaxed">
-          Fixed-scope packages, priced in your local currency{detected ? ` (detected: ${detected})` : ""}. Every engagement starts with a free consultation and a written proposal.
-        </p>
-        <p className="mt-2 font-mono text-xs uppercase tracking-widest text-brand">Live rates · shown in {currency}</p>
-      </section>
 
-      <section className="mx-auto max-w-[1400px] px-5 md:px-10 pb-20">
-        <div className="grid lg:grid-cols-3 gap-4">
-          {TIERS.map((t, i) => (
-            <Reveal key={t.name} delay={i * 0.08}>
-              <motion.div
-                whileHover={{ y: -6 }}
-                className={`relative flex h-full flex-col rounded-3xl border p-8 ${t.featured ? "border-brand bg-ink text-white shadow-2xl shadow-brand/20" : "border-line bg-white"}`}
-                data-testid={`pricing-tier-${t.name.toLowerCase()}`}
-              >
-                {t.featured && (
-                  <span className="absolute -top-3 left-8 inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-xs font-medium text-white"><Sparkles className="h-3.5 w-3.5" /> Most popular</span>
-                )}
-                <p className={`font-mono text-xs uppercase tracking-[0.2em] ${t.featured ? "text-white/60" : "text-muted-foreground"}`}>{t.name}</p>
-                <div className="mt-5 flex items-end gap-1">
-                  <span className={`font-mono text-sm ${t.featured ? "text-white/60" : "text-muted-foreground"}`}>from</span>
-                  <span className="font-heading text-5xl font-extrabold tracking-tighter">{price(t.inr)}</span>
-                </div>
-                <p className={`mt-1 text-xs ${t.featured ? "text-white/50" : "text-muted-foreground"}`}>per {t.cadence}</p>
-                <p className={`mt-5 text-sm leading-relaxed ${t.featured ? "text-white/75" : "text-ink/65"}`}>{t.tagline}</p>
-                <ul className="mt-7 space-y-3 flex-1">
-                  {t.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2.5 text-sm">
-                      <Check className={`mt-0.5 h-4 w-4 shrink-0 ${t.featured ? "text-brand" : "text-brand"}`} />
-                      <span className={t.featured ? "text-white/85" : "text-ink/75"}>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  to="/contact"
-                  data-testid={`pricing-cta-${t.name.toLowerCase()}`}
-                  className={`mt-8 inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 font-medium transition-colors duration-300 ${t.featured ? "bg-white text-ink hover:bg-brand hover:text-white" : "bg-ink text-white hover:bg-brand"}`}
-                >
-                  Get started <ArrowUpRight className="h-4 w-4" />
-                </Link>
-              </motion.div>
-            </Reveal>
-          ))}
-        </div>
-        <p className="mt-6 text-center text-sm text-muted-foreground">Prices are indicative, anchored in INR and shown live in your local currency at current exchange rates. Final quotes are fixed in your currency after a free consultation.</p>
-      </section>
-
-      {/* FAQ */}
-      <section className="mx-auto max-w-[900px] px-5 md:px-10 py-20 md:py-28" data-testid="pricing-faq">
-        <Reveal><h2 className="font-heading font-extrabold tracking-tighter text-3xl sm:text-4xl">Pricing questions</h2></Reveal>
-        <div className="mt-10 divide-y divide-line">
-          {PRICING_FAQS.map((f, i) => (
-            <Reveal key={f.q} delay={i * 0.05}>
-              <details className="group py-5" data-testid={`pricing-faq-item-${i}`}>
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-heading text-lg font-semibold tracking-tight">
-                  {f.q}
-                  <span className="ml-4 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand/10 text-brand transition-transform duration-300 group-open:rotate-45">+</span>
-                </summary>
-                <p className="mt-4 text-ink/65 leading-relaxed">{f.a}</p>
-              </details>
-            </Reveal>
-          ))}
-        </div>
+      <section className="mx-auto max-w-[1400px] px-5 md:px-10 pt-20 pb-16">
+        <Reveal><p className="overline flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-brand" /> Pricing, the honest way</p></Reveal>
+        <MaskLines as="h1" className="mt-6 max-w-4xl font-heading font-extrabold tracking-tighter text-5xl sm:text-6xl lg:text-7xl leading-[0.95]" lines={["No price lists.", "Fixed written quotes."]} />
+        <Reveal delay={0.1}>
+          <p className="mt-6 max-w-2xl text-lg text-ink/70 leading-relaxed">
+            Every project is scoped individually and quoted in writing — in your currency — after a free consultation. You always know the exact cost before any work begins.
+          </p>
+        </Reveal>
+        <Reveal delay={0.15}>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link to="/free-quote" data-testid="pricing-quote-cta" className="inline-flex items-center gap-2 rounded-full bg-brand px-7 py-3.5 font-medium text-white hover:bg-ink transition-colors">Get my free quote <ArrowUpRight className="h-4 w-4" /></Link>
+            <a href={waLink("Hi Rajeev, I'd like a quote for my project.")} target="_blank" rel="noopener noreferrer" data-testid="pricing-whatsapp-cta" className="inline-flex items-center gap-2 rounded-full border border-line px-7 py-3.5 font-medium hover:border-ink transition-colors"><MessageCircle className="h-4 w-4" /> WhatsApp your brief</a>
+          </div>
+        </Reveal>
       </section>
 
       <section className="bg-white border-y border-line">
-        <div className="mx-auto max-w-[1400px] px-5 md:px-10 py-20 grid lg:grid-cols-2 gap-14 items-start">
-          <div>
-            <Reveal><h2 className="font-heading font-extrabold tracking-tighter text-4xl sm:text-5xl leading-[0.95]">Need something custom?</h2></Reveal>
-            <Reveal delay={0.05}><p className="mt-6 max-w-md text-ink/70 leading-relaxed">Most projects are scoped bespoke. Tell me what you're building and I'll send a fixed-price proposal in your currency — usually within the hour.</p></Reveal>
-            <Reveal delay={0.1}><a href={waLink()} target="_blank" rel="noopener noreferrer" className="mt-8 inline-flex items-center gap-2 rounded-full bg-brand px-7 py-3.5 font-medium text-white hover:bg-ink transition-colors">Ask on WhatsApp <ArrowUpRight className="h-4 w-4" /></a></Reveal>
+        <div className="mx-auto max-w-[1400px] px-5 md:px-10 py-16 md:py-24">
+          <Reveal><h2 className="font-heading font-extrabold tracking-tighter text-3xl sm:text-4xl">Three ways to work together</h2></Reveal>
+          <div className="mt-10 grid md:grid-cols-3 gap-5">
+            {MODELS.map((m, i) => (
+              <Reveal key={m.title} delay={i * 0.08}>
+                <div className="h-full rounded-2xl border border-line bg-paper p-7 hover:border-ink transition-colors">
+                  <m.icon className="h-6 w-6 text-brand" />
+                  <p className="mt-4 font-heading text-2xl font-bold tracking-tight">{m.title}</p>
+                  <p className="mt-2 text-sm text-ink/60 leading-relaxed">{m.desc}</p>
+                  <ul className="mt-5 space-y-2.5">
+                    {m.points.map((pt) => (
+                      <li key={pt} className="flex items-start gap-2.5 text-sm text-ink/75"><Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" />{pt}</li>
+                    ))}
+                  </ul>
+                </div>
+              </Reveal>
+            ))}
           </div>
-          <Reveal delay={0.1}><ContactForm compact /></Reveal>
+          <Reveal delay={0.1}><p className="mt-6 text-center text-sm text-muted-foreground">Every engagement starts with a free consultation and ends with a fixed, written quote — the number is agreed before the work starts, never after.</p></Reveal>
         </div>
+      </section>
+
+      <section className="mx-auto max-w-[900px] px-5 md:px-10 py-16 md:py-24" data-testid="pricing-faq">
+        <Reveal><h2 className="font-heading font-extrabold tracking-tighter text-3xl sm:text-4xl">Pricing questions, answered</h2></Reveal>
+        <div className="mt-8 space-y-6">
+          {FAQS.map((f, i) => (
+            <Reveal key={f.q} delay={i * 0.05}>
+              <div className="border-b border-line pb-6">
+                <p className="font-heading text-lg font-bold">{f.q}</p>
+                <p className="mt-2 text-ink/70 leading-relaxed">{f.a}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-[1400px] px-5 md:px-10 pb-20">
+        <Reveal>
+          <div className="rounded-2xl bg-ink text-white p-8 md:p-12 grid lg:grid-cols-2 gap-8 items-center">
+            <div>
+              <h2 className="font-heading text-2xl md:text-3xl font-extrabold tracking-tighter">Tell me what you're building.</h2>
+              <p className="mt-3 text-white/70 leading-relaxed">Two minutes to brief, a fixed written quote within the hour — in your currency.</p>
+            </div>
+            <div className="flex flex-wrap lg:justify-end gap-3">
+              <Link to="/free-quote" className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-medium text-ink hover:bg-brand hover:text-white transition-colors">Get my free quote <ArrowUpRight className="h-4 w-4" /></Link>
+              <a href={waLink("Hi Rajeev, I'd like a quote for my project.")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/25 px-6 py-3 font-medium hover:bg-white/10 transition-colors"><MessageCircle className="h-4 w-4" /> WhatsApp</a>
+            </div>
+          </div>
+        </Reveal>
       </section>
     </div>
   );

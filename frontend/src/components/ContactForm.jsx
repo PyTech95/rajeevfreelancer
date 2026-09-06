@@ -71,7 +71,7 @@ export default function ContactForm({ defaultService = "", location = "", countr
           <option value="AI Automation">AI Automation</option>
           <option value="Others">Others</option>
         </select>
-        <input data-testid="contact-budget" className={field} placeholder="Budget (optional)" value={budget} onChange={(e) => setBudget(e.target.value)} />
+        <input data-testid="contact-budget" className={field} placeholder="Your budget (optional) — any amount: 5k, $500, ₹5,000…" value={budget} onChange={(e) => setBudget(e.target.value)} />
         <textarea data-testid="contact-message" rows={compact ? 3 : 4} className={`${field} sm:col-span-2 resize-none`} placeholder="Project details (optional)" value={form.message} onChange={set("message")} />
       </div>
       <button

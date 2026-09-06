@@ -54,7 +54,7 @@ export default function CityHub() {
     <div>
       <Seo
         title={`Freelancer Web, App, SEO & Marketing Services in ${hub.display} | Rajeev`}
-        description={`Senior freelancer web & app developer, SEO expert and digital marketer in ${hub.display}. Websites from ₹4,999, same-day delivery. Free quote. Serving ${hub.region}.`}
+        description={`Senior freelancer web & app developer, SEO expert and digital marketer in ${hub.display}. Same-day delivery. Free quote. Serving ${hub.region}.`}
         path={path}
         jsonLd={jsonLd}
       />

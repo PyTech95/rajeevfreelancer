@@ -31,7 +31,7 @@ const HEADLINES = {
 };
 const FAQS = [
   { q: "How quickly can you start my website, app or marketing project?", a: "Usually within 24–48 hours of our first call. Simple business websites can go live the same day; apps and marketing campaigns start with a short kickoff and a clear timeline." },
-  { q: "What does a website, app or digital marketing project cost?", a: "Business websites start at ₹4,999 / $99, mobile apps from ₹9,999 / $399, SEO from ₹6,999 / $129 per month and managed Google Ads from ₹9,999 / $199 per month. You get a fixed written quote before any work begins." },
+  { q: "What does a website, app or digital marketing project cost?", a: "Every project is scoped individually. After a free consultation you receive a fixed written quote — in your currency — before any work begins, so the cost is clear upfront with no surprises later." },
   { q: "Do you work with businesses outside India?", a: "Yes. I'm based in Gurgaon (Delhi NCR) and work with clients across India, Dubai, London, Singapore, Australia and the USA, with communication over WhatsApp, email and video calls in your time zone." },
   { q: "Why hire a freelancer instead of an agency?", a: "You work directly with the senior engineer who builds and markets your product — faster decisions, lower cost and full accountability, with no account managers or hand-offs." },
   { q: "Will I own the website, app and ad accounts?", a: "Always. You own the code, hosting, domains, Google Ads and analytics accounts. I set everything up in your name and hand over full access and documentation." },

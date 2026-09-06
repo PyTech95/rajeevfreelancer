@@ -97,7 +97,7 @@ export default function Home() {
     <div>
       <Seo
         title="Rajeev Freelancer — Freelancer for Web, App, SEO & AI Marketing | Delhi NCR & Worldwide"
-        description="Hire Rajeev — a senior freelancer for web & app development, SEO and AI/digital marketing with 12+ years' experience. Based in Gurgaon, serving Delhi NCR, Noida, Faridabad & clients worldwide. Websites from ₹4,999, same-day delivery. Free quote."
+        description="Hire Rajeev — a senior freelancer for web & app development, SEO and AI/digital marketing with 12+ years' experience. Based in Gurgaon, serving Delhi NCR, Noida, Faridabad & clients worldwide. Same-day delivery. Free quote."
         path="/"
         alternates={[
           { lang: "en", path: "/" },
@@ -210,7 +210,7 @@ export default function Home() {
               </Reveal>
               <Reveal delay={0.1}>
                 <p className="mt-6 max-w-xl text-ink/70 leading-relaxed">
-                  Based in Gurgaon and working across Delhi, Noida, Greater Noida, Faridabad and Ghaziabad — websites, mobile apps, SEO, Google Ads and AI automation for local businesses. Same-day websites from <strong>₹4,999</strong>, direct and senior-only.
+                  Based in Gurgaon and working across Delhi, Noida, Greater Noida, Faridabad and Ghaziabad — websites, mobile apps, SEO, Google Ads and AI automation for local businesses. Same-day websites, direct and senior-only.
                 </p>
               </Reveal>
               <Reveal delay={0.15}>

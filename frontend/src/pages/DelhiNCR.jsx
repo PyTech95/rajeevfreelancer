@@ -28,7 +28,7 @@ const POPULAR_SEARCHES = [
 
 const NCR_FAQS = [
   { q: "Who is the best web development freelancer in Delhi NCR?", a: "Rajeev is a senior freelancer and consultant with 12+ years of experience (ex-IOG, Accenture, Google), serving Delhi, Gurgaon, Noida, Greater Noida, Faridabad and Ghaziabad. You work with him directly — no agency, no junior staff." },
-  { q: "How fast can you deliver a website in Delhi NCR?", a: "A standard business website starts at ₹4,999 with same-day delivery. Mobile apps start at ₹9,999 and are typically ready within a week. Every project begins with a free consultation and a fixed-scope quote." },
+  { q: "How fast can you deliver a website in Delhi NCR?", a: "A standard business website is delivered same-day, and mobile apps are typically ready within a week. Every project begins with a free consultation and a fixed-scope written quote." },
   { q: "Do you meet clients in person in Gurgaon or Noida?", a: "Most work is delivered remotely with fast WhatsApp communication, but being based in the NCR, in-person or video calls for Gurgaon, Noida, Delhi and nearby areas can be arranged when needed." },
   { q: "Which services do you offer across Delhi NCR?", a: "Website & app development, SEO and GEO (AI-search) optimisation, Google Ads and digital marketing, AI chatbots and automation, plus WhatsApp and SMS marketing — for businesses across all of Delhi NCR." },
   { q: "How do I get started?", a: "Message on WhatsApp or send a short brief through the contact form. You'll usually get a reply within the hour and a fixed-scope proposal the same day." },
@@ -56,7 +56,7 @@ export default function DelhiNCR() {
     <div>
       <Seo
         title="Freelancer Web, App, SEO & Marketing Services in Delhi NCR | Rajeev"
-        description="Senior freelancer web & app developer, SEO expert and digital marketer serving Delhi, Gurgaon, Noida, Faridabad & Ghaziabad. Websites from ₹4,999, same-day delivery. Free quote."
+        description="Senior freelancer web & app developer, SEO expert and digital marketer serving Delhi, Gurgaon, Noida, Faridabad & Ghaziabad. Same-day delivery. Free quote."
         path={path}
         jsonLd={jsonLd}
       />
@@ -75,7 +75,7 @@ export default function DelhiNCR() {
           <MaskLines lines={["Websites, apps & growth", <>for <span className="text-shimmer">Delhi NCR</span> businesses.</>]} />
         </h1>
         <p className="mt-8 max-w-3xl text-lg text-ink/70 leading-relaxed">
-          A senior freelancer for Delhi, Gurgaon, Noida, Greater Noida, Faridabad and Ghaziabad — with 12+ years' experience across web, apps, SEO, AI automation and marketing. Direct, senior-only, and fast. Websites start at <strong>₹4,999 with same-day delivery</strong>.
+          A senior freelancer for Delhi, Gurgaon, Noida, Greater Noida, Faridabad and Ghaziabad — with 12+ years' experience across web, apps, SEO, AI automation and marketing. Direct, senior-only, and fast. With <strong>same-day website delivery</strong>.
         </p>
         <div className="mt-9 flex flex-wrap gap-3">
           <Link to="/contact" data-testid="ncr-quote-btn" className="inline-flex items-center gap-2 rounded-full bg-brand px-7 py-3.5 font-medium text-white hover:bg-ink transition-colors">Get a free quote <ArrowUpRight className="h-4 w-4" /></Link>
@@ -166,7 +166,7 @@ export default function DelhiNCR() {
           <h2 className="max-w-3xl font-heading font-extrabold tracking-tighter text-3xl sm:text-4xl lg:text-5xl">Why NCR businesses choose Rajeev</h2>
           <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { t: "Same-day websites", d: "Get online today from ₹4,999 — no month-long agency timelines." },
+              { t: "Same-day websites", d: "Get online today — no month-long agency timelines." },
               { t: "Senior, hands-on", d: "12+ years, ex-IOG/Accenture/Google. You deal with Rajeev directly." },
               { t: "Local + remote", d: "Based in the NCR with fast WhatsApp comms and calls when needed." },
               { t: "Rank on Google & AI", d: "SEO + GEO so you show up in search and in AI answers." },
