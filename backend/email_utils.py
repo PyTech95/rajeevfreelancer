@@ -341,6 +341,27 @@ async def send_lead_confirmation(lead: dict) -> None:
         logger.error(f"send_lead_confirmation failed: {e}")
 
 
+async def send_quote_followup(lead: dict) -> bool:
+    """One-time polite follow-up to an enquirer whose enquiry is still 'new' after 24h."""
+    name = (lead.get("name") or "there").split()[0]
+    service = (lead.get("service") or "your project").replace("-", " ")
+    inner = (
+        f'<tr><td style="padding:24px;font-size:14px;line-height:1.6;color:#111">'
+        f'<p style="margin:0 0 12px">Hi {name},</p>'
+        f'<p style="margin:0 0 12px">Thank you again for your enquiry about <strong>{service}</strong> — '
+        f'I replied yesterday and wanted to make sure it reached you.</p>'
+        f'<p style="margin:0 0 12px">If it helps, I can prepare a fixed, written quote for your project — '
+        f'free and with no obligation. Simply reply to this email, or send your brief here:</p>'
+        f'</td></tr>'
+        f'<tr><td style="padding:4px 24px 26px"><a href="{SITE_URL}/free-quote" '
+        'style="display:inline-block;background:#141414;color:#fff;text-decoration:none;'
+        'padding:12px 22px;border-radius:999px;font-size:13px">Get a free quote</a></td></tr>'
+        '<tr><td style="padding:0 24px 22px;font-size:14px;color:#111">Either way, happy to help.<br>— Rajeev</td></tr>'
+    )
+    result = await send_email(to=lead.get("email", ""), subject=f"Re: your enquiry about {service}", html=_shell(inner))
+    return bool(result)
+
+
 async def send_lead_digest(leads: list, period_label: str) -> int:
     """Owner digest of recent leads. Returns count sent (0 if none/failed). Never raises."""
     try:

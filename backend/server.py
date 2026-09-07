@@ -23,7 +23,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr
 
 from data import SERVICES, COUNTRIES, SERVICE_MAP, CITY_MAP, TOP_CITY_SLUGS
-from email_utils import notify_new_lead, send_lead_confirmation, send_lead_digest, email_status, apply_config as email_apply_config
+from email_utils import notify_new_lead, send_lead_confirmation, send_lead_digest, send_quote_followup, email_status, apply_config as email_apply_config
 from whatsapp_utils import send_lead_whatsapp, whatsapp_status, apply_config as whatsapp_apply_config
 from blog_seed import BLOG_SEED
 from case_seed import CASE_SEED
@@ -672,7 +672,7 @@ async def pregenerate_status(admin: dict = Depends(get_current_admin)):
 # ---------------- Daily lead digest ----------------
 from zoneinfo import ZoneInfo, available_timezones
 
-DEFAULT_DIGEST = {"hour": int(os.environ.get("DIGEST_HOUR_UTC", "7")), "tz": "UTC", "enabled": True}
+DEFAULT_DIGEST = {"hour": int(os.environ.get("DIGEST_HOUR_UTC", "7")), "tz": "UTC", "enabled": True, "followups_enabled": True}
 
 
 async def _get_digest_settings() -> dict:
@@ -680,7 +680,7 @@ async def _get_digest_settings() -> dict:
     if not doc:
         doc = {"key": "digest", **DEFAULT_DIGEST}
         await db.settings.update_one({"key": "digest"}, {"$setOnInsert": doc}, upsert=True)
-    return {"hour": int(doc.get("hour", 7)), "tz": doc.get("tz", "UTC"), "enabled": bool(doc.get("enabled", True))}
+    return {"hour": int(doc.get("hour", 7)), "tz": doc.get("tz", "UTC"), "enabled": bool(doc.get("enabled", True)), "followups_enabled": bool(doc.get("followups_enabled", True))}
 
 
 async def _collect_and_send_digest(hours: int = 24) -> int:
@@ -753,6 +753,14 @@ DEFAULT_SITE = {
         "popup_enabled": True,
         "offers_end_date": "",
     },
+    "offers": [
+        {"icon": "Code", "title": "Business Website", "slug": "freelancer-website-developer", "inr": "4,999", "usd": "99", "unit": "", "delivery": "Same-day delivery", "tag": "Launch today"},
+        {"icon": "Smartphone", "title": "Mobile App", "slug": "freelancer-app-developer", "inr": "9,999", "usd": "399", "unit": "", "delivery": "Ready in 1 week", "tag": "iOS & Android"},
+        {"icon": "Search", "title": "SEO That Ranks", "slug": "freelancer-seo-expert", "inr": "6,999", "usd": "129", "unit": "/mo", "delivery": "Results in 90 days", "tag": "Google + AI search"},
+        {"icon": "Bot", "title": "AI Chatbot", "slug": "freelancer-ai-consultant", "inr": "7,999", "usd": "149", "unit": "", "delivery": "Live in 3 days", "tag": "24/7 auto-replies"},
+        {"icon": "MessageCircle", "title": "WhatsApp Marketing", "slug": "whatsapp-marketing-freelancer", "inr": "2,999", "usd": "59", "unit": "", "delivery": "Go live in 24 hrs", "tag": "Bulk + automation"},
+        {"icon": "TrendingUp", "title": "Google Ads", "slug": "freelancer-digital-marketing-consultant", "inr": "9,999", "usd": "199", "unit": "/mo", "delivery": "Leads from week 1", "tag": "Fully managed"},
+    ],
 }
 
 
@@ -784,8 +792,8 @@ async def admin_get_site_settings(admin: dict = Depends(get_current_admin)):
 
 @api_router.put("/admin/settings/site")
 async def admin_update_site_settings(payload: dict, admin: dict = Depends(get_current_admin)):
-    allowed = {"seo", "contact", "social", "business", "tracking", "notifications", "marketing"}
-    update = {k: v for k, v in (payload or {}).items() if k in allowed and isinstance(v, dict)}
+    allowed = {"seo", "contact", "social", "business", "tracking", "notifications", "marketing", "offers"}
+    update = {k: v for k, v in (payload or {}).items() if k in allowed and isinstance(v, (dict, list))}
     if not update:
         raise HTTPException(status_code=400, detail="No valid settings provided")
     current = await db.settings.find_one({"key": "site"}, {"_id": 0, "key": 0}) or {}
@@ -1194,6 +1202,7 @@ class DigestSettings(BaseModel):
     hour: int
     tz: str
     enabled: bool = True
+    followups_enabled: bool = True
 
 
 @api_router.put("/admin/digest/settings")
@@ -1204,10 +1213,38 @@ async def update_digest_settings(payload: DigestSettings, admin: dict = Depends(
         raise HTTPException(status_code=400, detail=f"Unknown timezone: {payload.tz}")
     await db.settings.update_one(
         {"key": "digest"},
-        {"$set": {"key": "digest", "hour": payload.hour, "tz": payload.tz, "enabled": payload.enabled}},
+        {"$set": {"key": "digest", "hour": payload.hour, "tz": payload.tz, "enabled": payload.enabled, "followups_enabled": payload.followups_enabled}},
         upsert=True,
     )
-    return {"ok": True, "hour": payload.hour, "tz": payload.tz, "enabled": payload.enabled}
+    return {"ok": True, "hour": payload.hour, "tz": payload.tz, "enabled": payload.enabled, "followups_enabled": payload.followups_enabled}
+
+
+async def _send_quote_followups() -> int:
+    """One-time polite follow-up to enquirers still marked 'new' after 24h. Claim-first to avoid double sends."""
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    leads = await db.leads.find(
+        {"status": "new", "created_at": {"$lte": cutoff}, "followup_sent": {"$ne": True}},
+        {"_id": 0},
+    ).to_list(200)
+    sent = 0
+    for lead in leads:
+        res = await db.leads.update_one(
+            {"id": lead["id"], "followup_sent": {"$ne": True}},
+            {"$set": {"followup_sent": True, "followup_at": datetime.now(timezone.utc).isoformat()}},
+        )
+        if res.modified_count == 0:
+            continue
+        if await send_quote_followup(lead):
+            sent += 1
+    if leads:
+        logger.info(f"Quote follow-ups: {sent}/{len(leads)} sent")
+    return sent
+
+
+@api_router.post("/admin/followups/send")
+async def send_followups_now(admin: dict = Depends(get_current_admin)):
+    sent = await _send_quote_followups()
+    return {"sent": sent}
 
 
 async def _daily_digest_scheduler():
@@ -1229,7 +1266,17 @@ async def _daily_digest_scheduler():
         # Wake at most hourly so settings changes take effect without a restart.
         await asyncio.sleep(min(sleep_s, 3600))
         if sleep_s > 3600:
+            if s.get("followups_enabled"):
+                try:
+                    await _send_quote_followups()
+                except Exception as e:
+                    logger.error(f"Quote follow-up run failed: {e}")
             continue
+        if s.get("followups_enabled"):
+            try:
+                await _send_quote_followups()
+            except Exception as e:
+                logger.error(f"Quote follow-up run failed: {e}")
         try:
             count = await _collect_and_send_digest(24)
             logger.info(f"Daily digest sent ({count} leads) at {s['hour']}:00 {s['tz']}")

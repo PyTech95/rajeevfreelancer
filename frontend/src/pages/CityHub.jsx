@@ -6,7 +6,7 @@ import NotFound from "@/pages/NotFound";
 import { Reveal, MaskLines } from "@/components/Reveal";
 import ContactForm from "@/components/ContactForm";
 import GoogleBusinessCTA from "@/components/GoogleBusinessCTA";
-import { SERVICES, OFFERS, waLink } from "@/data/site";
+import { SERVICES, OFFERS, waLink, getOffers } from "@/data/site";
 import { CITY_HUBS } from "@/data/cityHubs";
 import { localBusinessSchema, faqSchema, breadcrumbSchema } from "@/lib/siteConfig";
 
@@ -24,6 +24,8 @@ const SEARCH_VERB = {
 
 export default function CityHub() {
   const { hubSlug } = useParams();
+  const settings = useSiteSettings();
+  const offers = getOffers(settings?.offers);
   const hub = CITY_HUBS[hubSlug];
   if (!hub) return <NotFound />;
 
@@ -100,7 +102,7 @@ export default function CityHub() {
       <section className="mx-auto max-w-[1400px] px-5 md:px-10 py-16 md:py-20">
         <Reveal><h2 className="font-heading font-extrabold tracking-tighter text-3xl sm:text-4xl">Launch offers for {hub.name}</h2></Reveal>
         <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {OFFERS.map((o) => (
+          {offers.map((o) => (
             <Link key={o.title} to={`/${o.slug}`} className="group rounded-2xl border border-line bg-white p-6 hover:border-ink transition-colors">
               <div className="flex items-center justify-between">
                 <h3 className="font-heading text-lg font-bold tracking-tight">{o.title}</h3>

@@ -66,6 +66,12 @@ export const OFFERS = [
   { icon: "TrendingUp", title: "Google Ads", slug: "freelancer-digital-marketing-consultant", inr: "9,999", usd: "199", unit: "/mo", delivery: "Leads from week 1", tag: "Fully managed" },
 ];
 
+// Admin-editable offers: site settings "offers" list overrides these defaults (matched by slug).
+export function getOffers(saved) {
+  const list = Array.isArray(saved) ? saved : [];
+  return OFFERS.map((d) => ({ ...d, ...(list.find((s) => s && s.slug === d.slug) || {}) }));
+}
+
 // Returns { sym, amt, unit } for an offer based on visitor region.
 export function offerPrice(o, inIndia) {
   return inIndia

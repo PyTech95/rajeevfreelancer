@@ -3,7 +3,7 @@ import Marquee from "react-fast-marquee";
 import { Zap, Clock, ArrowUpRight, Code, Smartphone, Search, Bot, MessageCircle, TrendingUp } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import OfferCountdown from "@/components/OfferCountdown";
-import { OFFERS, offerPrice, offerEnded, offerEndTs, waLink } from "@/data/site";
+import { OFFERS, offerPrice, offerEnded, offerEndTs, waLink, getOffers } from "@/data/site";
 import { useOfferRegion } from "@/hooks/useOfferRegion";
 import { useSiteSettings } from "@/context/SettingsContext";
 
@@ -52,7 +52,7 @@ export default function OffersStrip() {
         </div>
 
         <div className="mt-14 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {OFFERS.map((o, i) => {
+          {getOffers(settings?.offers).map((o, i) => {
             const Icon = ICONS[o.icon] || Code;
             const p = offerPrice(o, inIndia);
             return (
