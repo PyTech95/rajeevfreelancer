@@ -11,6 +11,7 @@ import asyncio
 import logging
 import uuid
 import requests
+import mimetypes
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 
@@ -28,6 +29,7 @@ from whatsapp_utils import send_lead_whatsapp, whatsapp_status, apply_config as 
 from blog_seed import BLOG_SEED
 from case_seed import CASE_SEED
 import autopilot
+from ai_provider import generate_text as gemini_generate_text
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("rajeevfreelancer")
@@ -45,41 +47,50 @@ api_router = APIRouter(prefix="/api")
 
 
 # ---------------- Object storage (admin image uploads) ----------------
-STORAGE_BASE = (os.environ.get("INTEGRATION_PROXY_URL") or "").strip() or "https://integrations.emergentagent.com"
-STORAGE_URL = STORAGE_BASE.rstrip("/") + "/objstore/api/v1/storage"
+# Production defaults to local persistent storage, outside the Git checkout so
+# `git clean -fd` deployments cannot delete uploaded media. Override with
+# LOCAL_STORAGE_DIR if desired. Existing API routes and DB storage_path values
+# remain unchanged.
 STORAGE_APP = "rajeevfreelancer"
-_storage_key = None
+LOCAL_STORAGE_DIR = Path(os.environ.get("LOCAL_STORAGE_DIR", "/var/lib/rajeevfreelancer/uploads")).resolve()
 _MIME_EXT = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif", "image/svg+xml": "svg"}
 
 
 def init_storage(force: bool = False):
-    global _storage_key
-    if _storage_key and not force:
-        return _storage_key
-    resp = requests.post(f"{STORAGE_URL}/init", json={"emergent_key": os.environ.get("EMERGENT_LLM_KEY")}, timeout=30)
-    resp.raise_for_status()
-    _storage_key = resp.json()["storage_key"]
-    return _storage_key
+    LOCAL_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+    # Quick writeability check without leaving a file behind.
+    probe = LOCAL_STORAGE_DIR / ".write-test"
+    probe.write_bytes(b"ok")
+    probe.unlink(missing_ok=True)
+    return str(LOCAL_STORAGE_DIR)
+
+
+def _local_object_path(path: str) -> Path:
+    rel = Path(str(path).lstrip("/"))
+    if rel.is_absolute() or ".." in rel.parts:
+        raise ValueError("Invalid storage path")
+    target = (LOCAL_STORAGE_DIR / rel).resolve()
+    if target != LOCAL_STORAGE_DIR and LOCAL_STORAGE_DIR not in target.parents:
+        raise ValueError("Invalid storage path")
+    return target
 
 
 def put_object(path: str, data: bytes, content_type: str) -> dict:
-    resp = requests.put(f"{STORAGE_URL}/objects/{path}",
-                        headers={"X-Storage-Key": init_storage(), "Content-Type": content_type},
-                        data=data, timeout=120)
-    if resp.status_code == 404:
-        resp = requests.put(f"{STORAGE_URL}/objects/{path}",
-                            headers={"X-Storage-Key": init_storage(force=True), "Content-Type": content_type},
-                            data=data, timeout=120)
-    resp.raise_for_status()
-    return resp.json()
+    init_storage()
+    target = _local_object_path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    tmp = target.with_name(target.name + f".{uuid.uuid4().hex}.tmp")
+    tmp.write_bytes(data)
+    os.replace(tmp, target)
+    return {"path": path, "content_type": content_type, "size": len(data)}
 
 
 def get_object(path: str):
-    resp = requests.get(f"{STORAGE_URL}/objects/{path}", headers={"X-Storage-Key": init_storage()}, timeout=60)
-    if resp.status_code == 404:
-        resp = requests.get(f"{STORAGE_URL}/objects/{path}", headers={"X-Storage-Key": init_storage(force=True)}, timeout=60)
-    resp.raise_for_status()
-    return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
+    target = _local_object_path(path)
+    if not target.is_file():
+        raise FileNotFoundError(path)
+    content_type = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
+    return target.read_bytes(), content_type
 
 
 # ---------------- Auth helpers ----------------
@@ -276,16 +287,8 @@ Return JSON with EXACTLY these keys:
 }}
 Keep it 800-1000 words total. Natural keyword use, no stuffing."""
     try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
-
-        chat = LlmChat(
-            api_key=os.environ["EMERGENT_LLM_KEY"],
-            session_id=f"{service['slug']}-{loc['loc_slug']}",
-            system_message=CONTENT_SYSTEM,
-        ).with_model("gemini", "gemini-3-flash-preview")
         async with _llm_gate:
-            resp = await chat.send_message(UserMessage(text=prompt))
-        text = resp if isinstance(resp, str) else str(resp)
+            text = await gemini_generate_text(prompt, system=CONTENT_SYSTEM)
         text = re.sub(r"^```(json)?|```$", "", text.strip(), flags=re.MULTILINE).strip()
         m = re.search(r"\{.*\}", text, re.DOTALL)
         data = json.loads(m.group(0) if m else text)
@@ -1455,15 +1458,11 @@ Audience: small/medium business owners, founders and marketing leads. Prefer spe
 Do NOT repeat any of these existing titles: {json.dumps(existing[:60])}.
 Return ONLY a JSON array of exactly 8 short topic strings, each <= 70 characters, no numbering, no markdown."""
     try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
-        chat = LlmChat(
-            api_key=os.environ["EMERGENT_LLM_KEY"],
-            session_id=f"topics-{uuid.uuid4().hex[:8]}",
-            system_message="You are an SEO content strategist. Reply with a JSON array of concise blog topic ideas only.",
-        ).with_model("gemini", "gemini-3-flash-preview")
         async with _llm_gate:
-            resp = await chat.send_message(UserMessage(text=prompt))
-        text = resp if isinstance(resp, str) else str(resp)
+            text = await gemini_generate_text(
+                prompt,
+                system="You are an SEO content strategist. Reply with a JSON array of concise blog topic ideas only.",
+            )
         text = re.sub(r"^```(json)?|```$", "", text.strip(), flags=re.MULTILINE).strip()
         m = re.search(r"\[.*\]", text, re.DOTALL)
         arr = json.loads(m.group(0) if m else text)
@@ -1519,9 +1518,9 @@ async def startup():
     await _reslug_content()
     try:
         await asyncio.to_thread(init_storage)
-        logger.info("Object storage initialized")
+        logger.info(f"Local object storage initialized at {LOCAL_STORAGE_DIR}")
     except Exception as e:
-        logger.warning(f"Storage init failed (uploads disabled until fixed): {e}")
+        logger.warning(f"Local storage init failed (uploads disabled until fixed): {e}")
 
 
 @app.on_event("shutdown")

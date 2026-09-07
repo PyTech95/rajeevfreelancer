@@ -6,7 +6,6 @@ import json
 import hmac
 import time
 import uuid
-import base64
 import asyncio
 import hashlib
 import logging
@@ -21,6 +20,7 @@ from fastapi import APIRouter, HTTPException, Request, Depends
 from fastapi.responses import Response, HTMLResponse
 from pydantic import BaseModel
 from pymongo.errors import DuplicateKeyError
+from ai_provider import generate_text as gemini_generate_text, generate_image as gemini_generate_image
 
 logger = logging.getLogger("rajeevfreelancer.autopilot")
 
@@ -148,11 +148,8 @@ async def settings_view(ap: dict) -> dict:
 
 # ---------------- LLM helpers ----------------
 async def _llm_json(prompt: str, system: str, session: str, expect: str = "object"):
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
-    chat = LlmChat(api_key=os.environ["EMERGENT_LLM_KEY"], session_id=session, system_message=system).with_model("gemini", "gemini-3-flash-preview")
     async with ctx["llm_gate"]:
-        resp = await chat.send_message(UserMessage(text=prompt))
-    text = resp if isinstance(resp, str) else str(resp)
+        text = await gemini_generate_text(prompt, system=system)
     text = re.sub(r"^```(json)?|```$", "", text.strip(), flags=re.MULTILINE).strip()
     m = re.search(r"\[.*\]" if expect == "array" else r"\{.*\}", text, re.DOTALL)
     return json.loads(m.group(0) if m else text)
@@ -344,19 +341,13 @@ def validate_article(data: dict, slug: str, corpus: list, ap: dict) -> List[str]
 
 # ---------------- cover image ----------------
 async def generate_cover(prompt: str, alt: str, slug: str) -> dict:
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
     full = (f"{prompt}. Editorial abstract illustration, modern flat/3D style, cohesive colour palette with deep blue accents, wide 16:9 landscape composition. "
             "Strictly no text, no letters, no numbers, no words, no logos, no watermark, no people, no faces, no portraits.")
     last_err = None
     for attempt in range(2):
         try:
-            chat = LlmChat(api_key=os.environ["EMERGENT_LLM_KEY"], session_id=f"cover-{slug}-{attempt}", system_message="You generate editorial cover images.")
-            chat.with_model("gemini", "gemini-3.1-flash-image-preview").with_params(modalities=["image", "text"])
             async with ctx["llm_gate"]:
-                _text, images = await chat.send_message_multimodal_response(UserMessage(text=full))
-            if not images:
-                raise RuntimeError("no image returned")
-            raw = base64.b64decode(images[0]["data"])
+                raw = await gemini_generate_image(full, system="You generate editorial cover images.")
             return await asyncio.to_thread(_process_and_store, raw, alt, slug, full)
         except Exception as e:
             last_err = e
