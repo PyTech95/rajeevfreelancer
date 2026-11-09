@@ -156,6 +156,16 @@ curl -s $D/ | grep -c 'What clients say'                           # 1
 Spot-check in a browser: home page (reviews block + footer map), `/contact` (compact reviews card),
 `/freelancer-seo-expert/pune-india` (facts section, breadcrumb), `/locations/india` ("More places" lists).
 
+## 4b. Bing / IndexNow (run once on the server after deploy)
+
+```bash
+python3 scripts/indexnow_submit_sitemaps.py --dry-run   # counts the URLs in the live sitemap index
+python3 scripts/indexnow_submit_sitemaps.py             # submits all ~40k URLs to IndexNow in 10,000-URL batches
+```
+Uses the key the app already serves at `/api/indexnow-key` (or `INDEXNOW_KEY`). Expect `HTTP 200/202 accepted`
+per batch. This feeds Bing, DuckDuckGo, Yahoo, Copilot/ChatGPT search, Yandex, Naver and Seznam; Google ignores
+IndexNow and uses the sitemap index instead.
+
 ## 5. Search Console (Rajeev or I can do this in Chrome)
 
 1. Sitemaps → remove the old flat entries, add `https://rajeevfreelancer.com/sitemap.xml` (the index). Google will list
