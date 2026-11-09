@@ -48,15 +48,23 @@ _PLACEHOLDER_RATINGS = {"", "4.9"}
 _PLACEHOLDER_REVIEW_COUNTS = {"", "96"}
 
 
-def google_profile_business(business: dict, defaults: dict) -> dict:
+def google_profile_business(business: dict, defaults: dict, stored: dict | None = None) -> dict:
     """Replace pre-launch placeholders stored in the settings document.
 
     Earlier builds shipped a generic Gurgaon map and an unverified "4.9 / 96
     reviews" placeholder that the admin had to switch off. The real listing now
-    exists, so a stored generic map or an unverified placeholder rating is
-    swapped for the checked snapshot. Values an admin entered deliberately
-    (a different rating with the verified box ticked, or a custom map) are kept.
+    exists, so a stored generic map or a placeholder rating is swapped for the
+    checked snapshot. Values an admin entered deliberately (a different rating
+    with the verified box ticked, or a custom map) are kept.
+
+    Call this on the merged settings (defaults + stored document), passing the
+    stored ``business`` section as ``stored``. Because the stored document may
+    predate the ``reviews_verified`` flag, the placeholder figures are
+    recognised by value: "4.9" / "96" are never real for this profile, whatever
+    the flag says. A real figure stored without the flag stays hidden until an
+    admin ticks the box.
     """
+    stored = stored or {}
     out = dict(business or {})
     for key in ("map_embed_url", "google_maps_url"):
         value = str(out.get(key) or "").strip()
@@ -64,16 +72,18 @@ def google_profile_business(business: dict, defaults: dict) -> dict:
             out[key] = defaults[key]
     rating = str(out.get("rating") or "").strip()
     count = str(out.get("reviews_count") or "").strip()
-    if not out.get("reviews_verified") and rating in _PLACEHOLDER_RATINGS and count in _PLACEHOLDER_REVIEW_COUNTS:
+    placeholder = rating in _PLACEHOLDER_RATINGS and count in _PLACEHOLDER_REVIEW_COUNTS
+    if placeholder:
         out["rating"] = defaults["rating"]
         out["reviews_count"] = defaults["reviews_count"]
         out["reviews_verified"] = True
         out["reviews_checked_on"] = defaults["reviews_checked_on"]
+    elif stored.get("rating") not in (None, "") and "reviews_verified" not in stored:
+        # A real, admin-entered figure that was never ticked as checked stays hidden.
+        out["reviews_verified"] = False
     if not isinstance(out.get("google_reviews"), list) or not out["google_reviews"]:
         out["google_reviews"] = defaults["google_reviews"]
     for key in ("google_review_url", "google_place_cid", "show_map"):
         if out.get(key) in (None, ""):
             out[key] = defaults[key]
     return out
-
-

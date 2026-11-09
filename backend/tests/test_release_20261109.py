@@ -71,6 +71,18 @@ def test_google_profile_admin_values_are_kept():
     assert hidden["reviews_verified"] is False  # a deliberately hidden rating stays hidden
 
 
+def test_google_profile_placeholder_wins_even_when_flag_merged_from_defaults():
+    # Live case on 9 Nov 2026: the stored document had rating 4.9 / 96 reviews but
+    # no reviews_verified key, so the merge with the defaults made it "verified".
+    from google_profile import google_profile_business
+    merged = {"rating": "4.9", "reviews_count": "96", "reviews_verified": True, "founder_name": "Rajeev "}
+    out = google_profile_business(merged, DEFAULTS, {"rating": "4.9", "reviews_count": "96", "founder_name": "Rajeev "})
+    assert (out["rating"], out["reviews_count"], out["reviews_verified"]) == ("5.0", "13", True)
+    # A real figure typed by an admin without ticking "checked" stays hidden.
+    real = google_profile_business({"rating": "4.7", "reviews_count": "21", "reviews_verified": True}, DEFAULTS, {"rating": "4.7", "reviews_count": "21"})
+    assert real["reviews_verified"] is False and real["rating"] == "4.7"
+
+
 def test_local_facts_layer_adds_unique_data_and_links():
     from location_facts import local_facts, local_facts_html, content_layer_date
     facts = local_facts("freelancer-seo-expert", "pune-india", path="/freelancer-seo-expert/pune-india")

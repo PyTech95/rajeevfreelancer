@@ -893,7 +893,7 @@ async def _get_site_settings() -> dict:
     merged["seo"]["canonical_domain"] = canonical_origin(merged)
     merged["seo"]["og_image"] = _brand_image(merged["seo"].get("og_image"), DEFAULT_SITE["seo"]["og_image"])
     merged["business"]["logo"] = _brand_image(merged["business"].get("logo"), DEFAULT_SITE["business"]["logo"])
-    merged["business"] = google_profile_business(merged["business"], DEFAULT_SITE["business"])
+    merged["business"] = google_profile_business(merged["business"], DEFAULT_SITE["business"], (doc or {}).get("business") or {})
     return merged
 
 
