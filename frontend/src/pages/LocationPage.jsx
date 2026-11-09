@@ -9,6 +9,7 @@ import { ArrowUpRight, MapPin, Check, Plus, Minus, MessageCircle, Loader2 } from
 import Seo from "@/components/Seo";
 import { Reveal, MaskLines } from "@/components/Reveal";
 import ContactForm from "@/components/ContactForm";
+import LocalFacts from "@/components/LocalFacts";
 import NotFound from "@/pages/NotFound";
 import { api } from "@/lib/api";
 import { SERVICES, waLink } from "@/data/site";
@@ -171,6 +172,9 @@ export default function LocationPage() {
           </div>
         </Reveal>
       </section>
+
+      {/* LOCAL FACTS: distinct place data + onward links (same data as the server HTML) */}
+      <LocalFacts facts={data.local_facts} serviceName={service.short || service.name} />
 
       {/* FAQ */}
       <section className="bg-white border-y border-line">

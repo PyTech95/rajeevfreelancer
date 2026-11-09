@@ -14,10 +14,11 @@ from functools import lru_cache
 from pathlib import Path
 from urllib.parse import urlsplit, quote, urlencode
 from xml.sax.saxutils import escape as xml_escape
-from live_service_catalog import canonical_service_path
+from live_service_catalog import canonical_service_path, PREFERRED_SERVICE_SLUGS
 from gsc_route_policy import ROUTE_STATUS, LEGACY_REDIRECTS, apply_index_policy, location_for_path, status_for_path
 from ai_discovery import robots_text
-from sitemap_shards import render_sitemap_files
+from sitemap_shards import render_sitemap_files, render_grouped_sitemap_files
+from location_facts import local_facts, local_facts_html, content_layer_date
 
 BUILD_DIR = Path(os.environ.get("FRONTEND_BUILD_DIR", str(Path(__file__).resolve().parents[1] / "frontend" / "build"))).resolve()
 try:
@@ -168,6 +169,99 @@ def static_entries(manifest: dict) -> dict:
     return entries
 
 
+# Keyword → live service hub for URLs of the retired WordPress site (for
+# example /freelance-app-development, /freelance-seo-services,
+# /freelance-web-design-services, /digital-marketing-services and the
+# /freelance-services/<service>-in-<city> pattern). Order matters: the first
+# matching keyword wins, so the more specific ones come first.
+_LEGACY_SERVICE_KEYWORDS = (
+    ("whatsapp", "whatsapp-marketing-freelancer"),
+    ("sms", "sms-marketing-freelancer"),
+    ("app", "freelance-app-developer"),
+    ("android", "freelance-app-developer"),
+    ("ios", "freelance-app-developer"),
+    ("mobile", "freelance-app-developer"),
+    ("seo", "freelance-seo-expert"),
+    ("search-engine", "freelance-seo-expert"),
+    ("digital-market", "freelance-digital-marketing-consultant"),
+    ("google-ads", "freelance-digital-marketing-consultant"),
+    ("adwords", "freelance-digital-marketing-consultant"),
+    ("ppc", "freelance-digital-marketing-consultant"),
+    ("social-media", "freelance-digital-marketing-consultant"),
+    ("marketing", "freelance-digital-marketing-consultant"),
+    ("ecommerce", "freelance-website-developer"),
+    ("e-commerce", "freelance-website-developer"),
+    ("wordpress", "freelance-website-developer"),
+    ("shopify", "freelance-website-developer"),
+    ("web", "freelance-website-developer"),
+    ("software", "freelance-software-developer"),
+    ("crm", "freelance-software-developer"),
+    ("erp", "freelance-software-developer"),
+    ("saas", "freelance-software-developer"),
+    ("chatbot", "freelance-ai-consultant"),
+    ("automation", "freelance-ai-consultant"),
+    ("ai", "freelance-ai-consultant"),
+)
+_LEGACY_PREFIXES = ("freelance-services", "services", "service", "freelancer", "freelance", "hire", "portfolio-item", "product", "tag", "category")
+_LEGACY_FILE_SUFFIXES = (".php", ".html", ".htm", ".asp", ".aspx")
+
+
+def _legacy_service_slug(text: str) -> str | None:
+    """Map a hyphenated legacy slug to a live service slug by keyword, or None."""
+    tokens = [t for t in text.lower().split("-") if t]
+    joined = "-" + "-".join(tokens) + "-"
+    for keyword, slug in _LEGACY_SERVICE_KEYWORDS:
+        if "-" in keyword:
+            if "-" + keyword in joined:
+                return slug
+            continue
+        for token in tokens:
+            # Short keywords must match a whole token ("ai", "seo", "sms", "crm");
+            # longer ones also match a prefix ("web" → "website", "app" → "apps").
+            if token == keyword or (len(keyword) >= 3 and keyword not in {"seo", "sms", "ios", "ppc", "crm", "erp", "ai"} and token.startswith(keyword)):
+                return slug
+    return None
+
+
+def legacy_wordpress_target(path: str, legacy_services: dict, city_map: dict) -> str | None:
+    """Return the canonical hub (or city page) for a retired WordPress URL, else None.
+
+    Handles one- and two-segment paths only; anything deeper, anything that
+    looks like an asset, and anything without a service keyword returns None so
+    the normal 404 applies.
+    """
+    clean = path.strip("/").lower()
+    if not clean or "/" in clean.strip("/") and clean.count("/") > 1:
+        return None
+    for suffix in _LEGACY_FILE_SUFFIXES:
+        if clean.endswith(suffix):
+            clean = clean[: -len(suffix)]
+    parts = [p for p in clean.split("/") if p]
+    if not parts or len(parts) > 2:
+        return None
+    if len(parts) == 2:
+        if parts[0] not in _LEGACY_PREFIXES:
+            return None
+        slug_text = parts[1]
+    else:
+        slug_text = parts[0]
+    if re.search(r"\.[a-z0-9]{1,5}$", slug_text):
+        return None
+    if slug_text in legacy_services:
+        return canonical_service_path("/" + legacy_services[slug_text])
+    service = _legacy_service_slug(slug_text)
+    if not service:
+        return None
+    # "...-in-<city>" from the old city landing pages → the live city page when the city is known.
+    city_match = re.search(r"-in-([a-z0-9-]+)$", slug_text)
+    if city_match:
+        city = city_match.group(1)
+        for loc_slug in (f"{city}-india", city):
+            if loc_slug in city_map:
+                return canonical_service_path(f"/{service}/{loc_slug}")
+    return canonical_service_path("/" + service)
+
+
 @lru_cache(maxsize=8)
 def _asset_tags(path: str, modified_ns: int, size: int):
     """Cache only build asset tags; page copy and database content stay live."""
@@ -179,7 +273,8 @@ def _asset_tags(path: str, modified_ns: int, size: int):
 
 def html_document(*, settings: dict, path: str, title: str, description: str, body: str,
                   data: dict | None = None, schema: list | None = None,
-                  index: bool = True, article: bool = False, heading: str | None = None, page_image: str | None = None, canonical_override: str | None = None, build_dir: Path = BUILD_DIR) -> str:
+                  index: bool = True, article: bool = False, heading: str | None = None, page_image: str | None = None, canonical_override: str | None = None, build_dir: Path = BUILD_DIR,
+                  breadcrumbs: list | None = None) -> str:
     from ai_runtime import public_settings_view
     settings = public_settings_view(settings)
     base = canonical_origin(settings)
@@ -199,16 +294,29 @@ def html_document(*, settings: dict, path: str, title: str, description: str, bo
         css, scripts = _asset_tags(str(template_path), stamp.st_mtime_ns, stamp.st_size)
     except OSError:
         pass
-    crumbs = '<nav aria-label="Breadcrumb"><a href="/">Home</a> / ' + esc(title) + '</nav>'
+    # Optional richer trail: [(label, path), ...] ending at the current page.
+    trail = [(str(label), str(href)) for label, href in (breadcrumbs or []) if label and href]
+    if trail:
+        crumbs = '<nav aria-label="Breadcrumb">' + ' / '.join(f'<a href="{esc(href)}">{esc(label)}</a>' for label, href in trail[:-1]) + ' / ' + esc(trail[-1][0]) + '</nav>'
+        crumb_items = [{"@type": "ListItem", "position": i + 1, "name": label, "item": (base + href if href.startswith("/") else href)} for i, (label, href) in enumerate(trail)]
+    else:
+        crumbs = '<nav aria-label="Breadcrumb"><a href="/">Home</a> / ' + esc(title) + '</nav>'
+        crumb_items = [{"@type": "ListItem", "position": 1, "name": "Home", "item": base + "/"}, {"@type": "ListItem", "position": 2, "name": title, "item": url}]
     entity = {"@type": "Organization", "@id": base + "/#organization", "name": name, "url": base + "/", "telephone": contact.get("phone", ""), "email": contact.get("email", "")}
     socials = settings.get("social") if isinstance(settings.get("social"), dict) else {}
     same_as = [public_asset(v, base) for v in [*socials.values(), business.get("google_profile_url")]]
     if any(same_as): entity["sameAs"] = [v for v in same_as if v]
     person = {"@type": "Person", "@id": base + "/#rajeev", "name": business.get("founder_name") or "Rajeev Kumar", "url": base + "/about", "worksFor": {"@id": base + "/#organization"}}
-    nodes = [entity, person, {"@type": "WebSite", "@id": base + "/#website", "name": name, "url": base + "/", "publisher": {"@id": base + "/#organization"}}, {"@type": "WebPage", "@id": url + "#webpage", "url": url, "name": title, "description": description, "isPartOf": {"@id": base + "/#website"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": base + "/"}, {"@type": "ListItem", "position": 2, "name": title, "item": url}]}] + (schema or [])
+    nodes = [entity, person, {"@type": "WebSite", "@id": base + "/#website", "name": name, "url": base + "/", "publisher": {"@id": base + "/#organization"}}, {"@type": "WebPage", "@id": url + "#webpage", "url": url, "name": title, "description": description, "isPartOf": {"@id": base + "/#website"}}, {"@type": "BreadcrumbList", "itemListElement": crumb_items}] + (schema or [])
     public_settings = {k: v for k, v in settings.items() if k in {"seo", "contact", "social", "business", "tracking", "marketing"}}
     bootstrap = {"path": path, "settings": public_settings, "data": data or {}}
-    document = f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{esc(title)}</title><meta name="description" content="{esc(description)}"><meta name="robots" content="{robots}">{canonical_tag}<link rel="alternate" type="application/rss+xml" title="{esc(name)} insights" href="/feed.xml"><meta property="og:type" content="{'article' if article else 'website'}"><meta property="og:site_name" content="{esc(name)}"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(description)}"><meta property="og:url" content="{esc(url)}">{f'<meta property="og:image" content="{esc(image)}">' if image else ''}<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{esc(title)}"><meta name="twitter:description" content="{esc(description)}">{f'<meta name="twitter:image" content="{esc(image)}">' if image else ''}{f'<meta name="google-site-verification" content="{esc(seo.get("google_verification"))}">' if seo.get("google_verification") else ''}{f'<meta name="twitter:site" content="{esc(seo.get("twitter_handle"))}">' if seo.get("twitter_handle") else ''}<meta property="og:locale" content="{esc(seo.get("default_locale") or "en")}">{css}<style>.seo-document{{max-width:900px;margin:auto;padding:32px 24px;font:17px/1.7 system-ui;color:#181818}}.seo-document h1{{font-size:clamp(2rem,6vw,3.5rem);line-height:1.12;margin:28px 0}}.seo-document h2{{font-size:1.6rem;margin:36px 0 12px}}.seo-document h3{{font-size:1.15rem;margin:24px 0 10px}}.seo-document p{{margin:16px 0}}.seo-document a{{color:#0055ff;text-decoration:underline}}.seo-document nav{{display:flex;gap:16px;flex-wrap:wrap}}.seo-document ul,.seo-document ol{{padding-left:24px;list-style:revert}}.seo-document img{{max-width:100%;height:auto}}.seo-document pre{{overflow:auto;background:#f5f5f5;padding:16px}}.seo-document footer{{border-top:1px solid #ddd;padding-top:24px;margin-top:40px}}</style><script type="application/ld+json">{safe_json({"@context":"https://schema.org","@graph":nodes})}</script><script>window.__RF_BOOTSTRAP__={safe_json(bootstrap)}</script>{scripts}</head><body><div id="root"><div class="seo-document"><header><a href="/">{esc(name)}</a><nav aria-label="Main"><a href="/services">Services</a><a href="/locations">Locations</a><a href="/about">About</a><a href="/blog">Insights</a><a href="/contact">Contact</a></nav></header><main id="main">{crumbs}<h1>{esc(heading or title)}</h1>{body}</main><footer><p>{esc(name)} · {esc(business.get('address', ''))}</p><p><a href="tel:{esc(contact.get('phone'))}">{esc(contact.get('phone'))}</a> · <a href="mailto:{esc(contact.get('email'))}">{esc(contact.get('email'))}</a></p></footer></div></div></body></html>'''
+    google_line = ""
+    if business.get("reviews_verified") and business.get("rating"):
+        listing = business.get("google_maps_url") or business.get("google_profile_url") or ""
+        reviews_text = f" · {esc(business.get('reviews_count'))} reviews" if business.get("reviews_count") else ""
+        label = f"Rated {esc(business.get('rating'))}/5 on Google{reviews_text}"
+        google_line = f'<p><a href="{esc(listing)}" rel="noopener">{label}</a></p>' if listing else f"<p>{label}</p>"
+    document = f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{esc(title)}</title><meta name="description" content="{esc(description)}"><meta name="robots" content="{robots}">{canonical_tag}<link rel="alternate" type="application/rss+xml" title="{esc(name)} insights" href="/feed.xml"><meta property="og:type" content="{'article' if article else 'website'}"><meta property="og:site_name" content="{esc(name)}"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(description)}"><meta property="og:url" content="{esc(url)}">{f'<meta property="og:image" content="{esc(image)}">' if image else ''}<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{esc(title)}"><meta name="twitter:description" content="{esc(description)}">{f'<meta name="twitter:image" content="{esc(image)}">' if image else ''}{f'<meta name="google-site-verification" content="{esc(seo.get("google_verification"))}">' if seo.get("google_verification") else ''}{f'<meta name="twitter:site" content="{esc(seo.get("twitter_handle"))}">' if seo.get("twitter_handle") else ''}<meta property="og:locale" content="{esc(seo.get("default_locale") or "en")}">{css}<style>.seo-document{{max-width:900px;margin:auto;padding:32px 24px;font:17px/1.7 system-ui;color:#181818}}.seo-document h1{{font-size:clamp(2rem,6vw,3.5rem);line-height:1.12;margin:28px 0}}.seo-document h2{{font-size:1.6rem;margin:36px 0 12px}}.seo-document h3{{font-size:1.15rem;margin:24px 0 10px}}.seo-document p{{margin:16px 0}}.seo-document a{{color:#0055ff;text-decoration:underline}}.seo-document nav{{display:flex;gap:16px;flex-wrap:wrap}}.seo-document ul,.seo-document ol{{padding-left:24px;list-style:revert}}.seo-document img{{max-width:100%;height:auto}}.seo-document pre{{overflow:auto;background:#f5f5f5;padding:16px}}.seo-document footer{{border-top:1px solid #ddd;padding-top:24px;margin-top:40px}}.rf-local-facts{{margin-top:40px;border-top:1px solid #ddd;padding-top:8px}}.rf-local-facts dl{{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 24px;margin:16px 0}}.rf-local-facts dt{{font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:#666}}.rf-local-facts dd{{margin:2px 0 0;font-weight:600}}.rf-links{{columns:2;column-gap:24px}}.rf-links li{{break-inside:avoid}}</style><script type="application/ld+json">{safe_json({"@context":"https://schema.org","@graph":nodes})}</script><script>window.__RF_BOOTSTRAP__={safe_json(bootstrap)}</script>{scripts}</head><body><div id="root"><div class="seo-document"><header><a href="/">{esc(name)}</a><nav aria-label="Main"><a href="/services">Services</a><a href="/locations">Locations</a><a href="/about">About</a><a href="/blog">Insights</a><a href="/contact">Contact</a></nav></header><main id="main">{crumbs}<h1>{esc(heading or title)}</h1>{body}</main><footer><p>{esc(name)} · {esc(business.get('address', ''))}</p><p><a href="tel:{esc(contact.get('phone'))}">{esc(contact.get('phone'))}</a> · <a href="mailto:{esc(contact.get('email'))}">{esc(contact.get('email'))}</a></p>{google_line}</footer></div></div></body></html>'''
 
     # Helmet owns these nodes after the interactive app mounts. Without this
     # marker, manually rendered tags would remain beside a second CSR set.
@@ -426,6 +534,14 @@ def location_html(doc: dict, settings: dict, *, build_dir: Path = BUILD_DIR) -> 
     body += '<h2>What the service covers</h2><p>' + esc(content.get("service_details")) + '</p><h2>Project process</h2>'
     body += "".join(f'<h3>{esc(p.get("title"))}</h3><p>{esc(p.get("text"))}</p>' for p in content.get("process", []))
     body += f'<h2>Local context</h2><p>{esc(content.get("local_context"))}</p><h2>Communication</h2><p>{esc(content.get("whatsapp_section"))}</p>'
+    # Distinct, verifiable facts and onward links for this exact place. The
+    # stored title, description and editorial copy above are not modified.
+    service_slug = path.strip("/").split("/", 1)[0]
+    loc_slug = str(location.get("loc_slug") or path.strip("/").split("/")[-1])
+    facts = local_facts(service_slug, loc_slug, path=path)
+    if facts:
+        doc["local_facts"] = facts
+        body += local_facts_html(facts)
     if doc.get("is_new_location"):
         if location.get("local_context"):
             body += '<h2>Location and delivery planning</h2><p>' + esc(location["local_context"]) + '</p>'
@@ -434,14 +550,17 @@ def location_html(doc: dict, settings: dict, *, build_dir: Path = BUILD_DIR) -> 
         if source:
             body += '<p>Location reference: <a href="' + esc(source) + '">geographic source</a>.</p>'
     body += faq_html(content.get("faqs"))
-    nodes = [{"@type": "Service", "name": service.get("name"), "serviceType": service.get("name"), "provider": {"@id": canonical_origin(settings) + "/#organization"}, "areaServed": {"@type": "Place" if location.get("location_type") == "locality" else "City", "name": location.get("city")}, "url": canonical_origin(settings) + canonical_service_path(path)}]
+    area = {"@type": "Place" if location.get("location_type") == "locality" else "City", "name": location.get("city")}
+    if facts and facts["place"].get("latitude") is not None:
+        area = {**area, "geo": {"@type": "GeoCoordinates", "latitude": facts["place"]["latitude"], "longitude": facts["place"]["longitude"]},
+                "containedInPlace": {"@type": "Country", "name": location.get("country") or facts["place"]["country"]}}
+    nodes = [{"@type": "Service", "name": service.get("name"), "serviceType": service.get("name"), "provider": {"@id": canonical_origin(settings) + "/#organization"}, "areaServed": area, "url": canonical_origin(settings) + canonical_service_path(path)}]
     faqs = [f for f in content.get("faqs", []) if isinstance(f, dict) and f.get("q") and f.get("a")]
     if faqs:
         nodes.append({"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": f["q"], "acceptedAnswer": {"@type": "Answer", "text": f["a"]}} for f in faqs]})
     # The initial server HTML must offer the same useful onward journeys as
     # the interactive city page. Keep saved editorial copy and URLs intact;
     # link only to established hubs, never to an unapproved sibling city.
-    service_slug = path.strip("/").split("/", 1)[0]
     links = []
     if SLUG.fullmatch(service_slug):
         service_path = canonical_service_path("/" + service_slug)
@@ -451,7 +570,13 @@ def location_html(doc: dict, settings: dict, *, build_dir: Path = BUILD_DIR) -> 
         links.append(("/locations/" + country_slug, str(location.get("country") or "Country") + " service areas"))
     links.extend([("/work", "Project examples"), ("/contact", "Discuss your project")])
     body += '<section aria-label="Continue planning your project"><h2>Explore this service</h2><nav aria-label="Service and project links">' + ''.join('<a href="' + esc(href) + '">' + esc(label) + '</a>' for href, label in links) + '</nav></section>'
-    return html_document(settings=settings, path=path, title=content.get("title") or service["name"], heading=content.get("h1") or service["name"], description=str(content.get("meta_description") or ""), body=body, data={"locationPage": doc}, schema=nodes, index=not doc.get("seo_noindex") and (not doc.get("is_new_location") or doc.get("seo_reviewed") is True), build_dir=build_dir)
+    trail = [("Home", "/")]
+    if SLUG.fullmatch(service_slug):
+        trail.append((str(service.get("name") or "Service"), canonical_service_path("/" + service_slug)))
+    if isinstance(country_slug, str) and SLUG.fullmatch(country_slug):
+        trail.append((str(location.get("country") or "Country"), "/locations/" + country_slug))
+    trail.append((str(location.get("city") or content.get("h1") or service["name"]), canonical_service_path(path)))
+    return html_document(settings=settings, path=path, title=content.get("title") or service["name"], heading=content.get("h1") or service["name"], description=str(content.get("meta_description") or ""), body=body, data={"locationPage": doc}, schema=nodes, index=not doc.get("seo_noindex") and (not doc.get("is_new_location") or doc.get("seo_reviewed") is True), build_dir=build_dir, breadcrumbs=trail)
 
 
 def sitemap_xml(entries: dict, origin: str) -> str:
@@ -472,6 +597,58 @@ def sitemap_xml(entries: dict, origin: str) -> str:
         stamp = f"<lastmod>{xml_escape(updated)}</lastmod>" if valid_date else ""
         rows.append(f"<url><loc>{xml_escape(origin + path)}</loc>{stamp}</url>")
     return '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + "".join(rows) + '</urlset>'
+
+
+# Above this many URLs the root sitemap becomes an index of named group files.
+GROUPED_SITEMAP_MIN_URLS = 5000
+_DATE_KEYS = ("lastmod", "updated_at", "seo_reviewed_at", "published_at", "generated_at", "created_at")
+
+
+def _row_date(row: dict) -> str:
+    best = ""
+    for key in _DATE_KEYS:
+        value = row.get(key)
+        if isinstance(value, datetime):
+            value = value.isoformat()
+        if not isinstance(value, str):
+            continue
+        try:
+            datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if value[:10] > best[:10]:
+            best = value
+    return best
+
+
+def sitemap_groups(entries: dict, city_map: dict, service_map: dict) -> list:
+    """Split the canonical inventory into named groups for the sitemap index.
+
+    core                      static pages, service hubs, countries, blog, work…
+    places-base-<service>     the original catalog places for one service
+    places-more-<service>     the additional (world-expansion) places for one service
+
+    Location pages receive a lastmod no older than the shared content layer
+    (facts + onward links), because that is when their content last changed.
+    Page URLs are not altered; only the file they are listed in.
+    """
+    layer_date = content_layer_date()
+    groups = {"core": {}}
+    for path, row in entries.items():
+        parts = path.strip("/").split("/")
+        if len(parts) != 2 or parts[0] not in service_map:
+            groups["core"][path] = row
+            continue
+        live_slug = PREFERRED_SERVICE_SLUGS.get(parts[0], parts[0])
+        loc = city_map.get(parts[1])
+        base = loc is not None or bool(status_for_path(path).get("index_continuity"))
+        name = f"places-{'base' if base else 'more'}-{live_slug}"
+        stamp = max(_row_date(row), layer_date)
+        groups.setdefault(name, {})[path] = {**row, "lastmod": stamp} if stamp else row
+    ordered = [("core", groups.pop("core"))]
+    ordered += sorted(((name, rows) for name, rows in groups.items() if name.startswith("places-base-")), key=lambda item: item[0])
+    ordered += sorted(((name, rows) for name, rows in groups.items() if name.startswith("places-more-")), key=lambda item: item[0])
+    return ordered
 
 
 def build_public_router(*, db, get_settings, services, city_map, fallback_content, build_dir: Path = BUILD_DIR):
@@ -528,7 +705,13 @@ def build_public_router(*, db, get_settings, services, city_map, fallback_conten
                     entries[prefix + row["slug"]] = row
         # The live Mongo catalog can be newer than an uploaded source ZIP. Keep
         # complete legacy canonical paths even when their city is absent here.
-        for row in await db.location_pages.find({}, {"_id": 0}).to_list(None):
+        # The catalog is ~40,000 documents; the sitemap needs only routing,
+        # policy and date fields, never the page bodies.
+        projection = {"_id": 0, "canonical": 1, "key": 1, "service.slug": 1, "service.name": 1, "location.loc_slug": 1,
+                      "location.city": 1, "location.country_slug": 1, "content.title": 1, "content.meta_description": 1,
+                      "seo_reviewed": 1, "seo_noindex": 1, "is_new_location": 1, "new_world_expansion": 1,
+                      "lastmod": 1, "updated_at": 1, "seo_reviewed_at": 1, "generated_at": 1, "created_at": 1, "published_at": 1}
+        for row in await db.location_pages.find({}, projection).to_list(None):
             raw_path = row.get("canonical") or ("/" + str((row.get("service") or {}).get("slug", "")) + "/" + str((row.get("location") or {}).get("loc_slug", "")))
             path = canonical_path(raw_path)
             if location_document_valid(row, path):
@@ -555,12 +738,19 @@ def build_public_router(*, db, get_settings, services, city_map, fallback_conten
                 preferred_entries[preferred] = row
         return preferred_entries
 
+    def public_sitemap_files(entries: dict, origin: str) -> dict:
+        # Small inventories stay a single file; the full catalog is an index of
+        # named groups so Search Console can report each group separately.
+        if len(entries) > GROUPED_SITEMAP_MIN_URLS:
+            return render_grouped_sitemap_files(sitemap_groups(entries, city_map, service_map), origin)
+        return render_sitemap_files(entries, origin, prefix="public")
+
     @router.api_route("/sitemap.xml", methods=["GET", "HEAD"], include_in_schema=False)
     async def public_sitemap():
         settings = await get_settings()
         entries = await inventory(settings)
         indexing = settings.get("seo", {}).get("robots_index", True)
-        files = render_sitemap_files(entries if indexing else {}, canonical_origin(settings), prefix="public")
+        files = public_sitemap_files(entries if indexing else {}, canonical_origin(settings))
         return Response(files["root_xml"], media_type="application/xml", headers={**headers, **({"X-Robots-Tag": "noindex, follow"} if not indexing else {})})
 
     @router.api_route("/api/sitemaps/content.xml", methods=["GET", "HEAD"], include_in_schema=False)
@@ -575,17 +765,22 @@ def build_public_router(*, db, get_settings, services, city_map, fallback_conten
 
     @router.api_route("/sitemaps/{shard_name}", methods=["GET", "HEAD"], include_in_schema=False)
     async def sitemap_shard(shard_name: str):
-        if not re.fullmatch(r"(?:public|content)-\d{4,}\.xml", shard_name):
+        numbered = re.fullmatch(r"(?:public|content)-\d{4,}\.xml", shard_name)
+        grouped = re.fullmatch(r"(?:core|places-(?:base|more)-[a-z0-9-]+)(?:-\d{4,})?\.xml", shard_name)
+        if not numbered and not grouped:
             raise HTTPException(404, "Sitemap not found")
         settings = await get_settings()
         if not settings.get("seo", {}).get("robots_index", True):
             raise HTTPException(404, "Sitemap not found")
         entries = await inventory(settings)
-        prefix = shard_name.split("-", 1)[0]
-        if prefix == "content":
-            static = static_entries(load_manifest(build_dir))
-            entries = {path: row for path, row in entries.items() if path not in static}
-        files = render_sitemap_files(entries, canonical_origin(settings), prefix=prefix)
+        if grouped:
+            files = public_sitemap_files(entries, canonical_origin(settings))
+        else:
+            prefix = shard_name.split("-", 1)[0]
+            if prefix == "content":
+                static = static_entries(load_manifest(build_dir))
+                entries = {path: row for path, row in entries.items() if path not in static}
+            files = render_sitemap_files(entries, canonical_origin(settings), prefix=prefix)
         content = files["shards"].get("sitemaps/" + shard_name)
         if content is None:
             raise HTTPException(404, "Sitemap not found")
@@ -806,6 +1001,13 @@ def build_public_router(*, db, get_settings, services, city_map, fallback_conten
             return FileResponse(asset)
         if path == "/" and not (build_dir / "index.html").is_file():
             return HTMLResponse(html_document(settings=settings, path=path, title="Website build unavailable", description="The website is temporarily unavailable.", body="<p>Please try again shortly.</p>", index=False, build_dir=build_dir), status_code=503, headers={"Retry-After": "300", "X-Robots-Tag": "noindex"})
+        # Last resort for URLs from the old WordPress site that still carry
+        # links or sit in Search Console as "Not found": send them to the
+        # matching service hub instead of a 404. Only paths that no route above
+        # recognised reach this point, so existing pages are never affected.
+        legacy_target = legacy_wordpress_target(path, legacy_services, city_map)
+        if legacy_target:
+            return RedirectResponse(legacy_target, status_code=301)
         return await missing(settings, path)
 
     return router

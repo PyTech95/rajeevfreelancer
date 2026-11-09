@@ -5,6 +5,7 @@ import Seo from "@/components/Seo";
 import ContactForm from "@/components/ContactForm";
 import HeroMotion from "@/components/HeroMotion";
 import { WorkCard } from "@/components/WorkCard";
+import GoogleReviews from "@/components/GoogleReviews";
 import { api } from "@/lib/api";
 import { CONTACT, waLink } from "@/data/site";
 import { faqSchema, localBusinessSchema } from "@/lib/siteConfig";
@@ -110,6 +111,8 @@ export default function Home() {
       </section>
 
       <section className="border-y border-ink/10 bg-white" aria-labelledby="home-location-heading"><div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-8 px-5 py-10 md:px-10"><div className="flex items-start gap-4"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand/[0.06]"><MapPin className="h-5 w-5 text-brand" aria-hidden="true" /></span><div><h2 id="home-location-heading" className="font-heading text-xl font-bold tracking-tight">Based in Gurgaon. Working remotely.</h2><p className="mt-1.5 max-w-xl text-sm leading-relaxed text-ink/60">Available for projects across Delhi NCR and remote collaboration with teams worldwide.</p></div></div><div className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold"><Link to="/delhi-ncr" className="hover:text-brand">Delhi NCR <ArrowUpRight className="ml-1 inline h-3.5 w-3.5" aria-hidden="true" /></Link><Link to="/service-areas" className="hover:text-brand">Worldwide service areas <ArrowUpRight className="ml-1 inline h-3.5 w-3.5" aria-hidden="true" /></Link></div></div></section>
+
+      <GoogleReviews />
 
       <section className="mx-auto grid max-w-[1400px] gap-10 px-5 py-16 md:px-10 md:py-24 lg:grid-cols-12 lg:gap-20" aria-labelledby="home-faq-heading"><div className="lg:col-span-4"><p className="font-mono text-[10px] uppercase tracking-[0.2em] text-brand">04 / Before we begin</p><h2 id="home-faq-heading" className="mt-4 font-heading text-4xl font-bold tracking-[-0.04em] md:text-5xl">Good questions.<br />Clear answers.</h2><p className="mt-5 text-sm leading-relaxed text-ink/60">Have something more specific in mind? Send me a short brief.</p></div><div className="lg:col-span-8">{HOME_FAQS.map(faq => <details key={faq.q} className="group border-b border-ink/15 first:border-t"><summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-5 text-base font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand [&::-webkit-details-marker]:hidden">{faq.q}<span className="text-xl font-normal text-brand group-open:hidden" aria-hidden="true">+</span><span className="hidden text-xl font-normal text-brand group-open:block" aria-hidden="true">−</span></summary><p className="max-w-2xl pb-6 text-sm leading-relaxed text-ink/65">{faq.a}</p></details>)}</div></section>
 

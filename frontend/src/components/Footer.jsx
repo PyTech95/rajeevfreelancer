@@ -11,6 +11,12 @@ export default function Footer() {
   const social = settings?.social || {};
   const business = settings?.business || {};
   const socialLinks = Object.entries(social).filter(([, url]) => url);
+  // The map shows the Google Business Profile listing itself (a service-area
+  // business), so it does not depend on a walk-in office being verified.
+  const showMap = business.show_map !== false && !!business.map_embed_url;
+  const reviewsLine = business.reviews_verified && business.rating
+    ? `${business.rating}/5${business.reviews_count ? ` from ${business.reviews_count} reviews` : ""}`
+    : "";
 
   return (
     <footer data-testid="site-footer" className="bg-ink text-white">
@@ -78,7 +84,7 @@ export default function Footer() {
               <ul className="space-y-2.5 text-white/70">
                 <li><a href={waLink()} target="_blank" rel="noopener noreferrer" className="hover:text-white">{CONTACT.whatsappDisplay}</a></li>
                 <li><a href={`mailto:${CONTACT.email}`} className="hover:text-white break-all">{CONTACT.email}</a></li>
-                <li><a href={googleProfileUrl()} target="_blank" rel="noopener noreferrer" data-testid="footer-google-link" className="inline-flex items-center gap-1.5 hover:text-white"><Star className="h-3.5 w-3.5 fill-[#FBBC05] text-[#FBBC05]" /> Find us on Google</a></li>
+                <li><a href={googleProfileUrl()} target="_blank" rel="noopener noreferrer" data-testid="footer-google-link" className="inline-flex items-center gap-1.5 hover:text-white"><Star className="h-3.5 w-3.5 fill-[#FBBC05] text-[#FBBC05]" /> {reviewsLine ? `${business.rating}/5 on Google` : "Find us on Google"}</a></li>
                 {business.customer_facing_office_verified && business.google_maps_url && (
                   <li><a href={business.google_maps_url} target="_blank" rel="noopener noreferrer" data-testid="footer-map-link" className="inline-flex items-center gap-1 hover:text-white"><MapPin className="h-3.5 w-3.5 text-brand" /> {business.address || "View on map"}</a></li>
                 )}
@@ -89,16 +95,37 @@ export default function Footer() {
           </div>
         </div>
 
-        {business.customer_facing_office_verified && business.map_embed_url && (
-          <div className="mt-10 overflow-hidden rounded-2xl border border-white/10" data-testid="footer-map">
-            <iframe
-              title="Business location map"
-              src={business.map_embed_url}
-              className="w-full h-64"
-              style={{ border: 0, filter: "grayscale(1) invert(0.92) contrast(0.9)" }}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
+        {showMap && (
+          <div className="mt-10 grid gap-6 lg:grid-cols-12 lg:items-center" data-testid="footer-map">
+            <div className="lg:col-span-4">
+              <p className="font-mono text-xs uppercase tracking-[0.22em] text-white/65">/ On Google Maps</p>
+              <h3 className="mt-4 font-heading text-2xl font-bold tracking-tight">Rajeev Freelancer · Delhi NCR</h3>
+              <p className="mt-3 text-sm leading-relaxed text-white/60">
+                A service-area business based in {business.address || "Gurgaon, India"}: I work with clients across Delhi, Gurugram, Noida, Faridabad and Ghaziabad, and remotely worldwide.
+                {reviewsLine && <> Rated <strong className="text-white">{reviewsLine}</strong> on Google.</>}
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3 text-sm">
+                <a href={business.google_maps_url || googleProfileUrl()} target="_blank" rel="noopener noreferrer" data-testid="footer-map-open" className="inline-flex items-center gap-1.5 rounded-full border border-white/25 px-4 py-2 hover:border-white transition-colors">
+                  <MapPin className="h-3.5 w-3.5 text-brand" /> Open in Google Maps
+                </a>
+                {business.google_review_url && (
+                  <a href={business.google_review_url} target="_blank" rel="noopener noreferrer" data-testid="footer-write-review" className="inline-flex items-center gap-1.5 rounded-full border border-white/25 px-4 py-2 hover:border-white transition-colors">
+                    <Star className="h-3.5 w-3.5 fill-[#FBBC05] text-[#FBBC05]" /> Write a review
+                  </a>
+                )}
+              </div>
+            </div>
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 lg:col-span-8">
+              <iframe
+                title="Rajeev Freelancer on Google Maps — Delhi NCR service area"
+                src={business.map_embed_url}
+                className="block h-64 w-full md:h-80"
+                style={{ border: 0 }}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
+            </div>
           </div>
         )}
 

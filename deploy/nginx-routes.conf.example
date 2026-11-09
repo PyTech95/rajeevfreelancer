@@ -1,12 +1,47 @@
 # Insert these locations into the EXISTING HTTPS server for rajeevfreelancer.com.
 # Set root and the proxy port to your CURRENT project path/API port.
 # Keep your existing certificate configuration. Do not create a second conflicting location /.
+
+# 1. One public host only. Search Console (Oct 2026) listed https://www.rajeevfreelancer.com/...
+#    pages as duplicates because the www host served full copies of every page.
+#    Redirect www (and plain http) permanently to https://rajeevfreelancer.com, keeping the path.
+#    The FastAPI app also redirects the www host itself, so this block is a fast path, not a dependency.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name rajeevfreelancer.com www.rajeevfreelancer.com;
+    return 301 https://rajeevfreelancer.com$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name www.rajeevfreelancer.com;
+    # reuse the SAME ssl_certificate / ssl_certificate_key lines as the main server
+    return 301 https://rajeevfreelancer.com$request_uri;
+}
+
+# 2. Inside the existing  server { listen 443 ssl; server_name rajeevfreelancer.com; ... }  block:
 root /var/www/rajeevfreelancer/frontend/build;
 
 location ^~ /static/ {
     try_files $uri =404;
     expires 1y;
     add_header Cache-Control "public, immutable";
+}
+
+# Favicons, manifest and brand images are plain files in the build; serve them
+# directly with a long cache so Google can fetch the site icon quickly.
+location ~* ^/(favicon\.ico|favicon-\d+x\d+\.png|apple-touch-icon\.png|android-chrome-\d+x\d+\.png|manifest\.json)$ {
+    try_files $uri =404;
+    expires 7d;
+    add_header Cache-Control "public";
+}
+
+location ^~ /assets/ {
+    try_files $uri =404;
+    expires 30d;
+    add_header Cache-Control "public";
 }
 
 # Public HTML, live sitemap/robots/feed and JSON API all reach FastAPI.

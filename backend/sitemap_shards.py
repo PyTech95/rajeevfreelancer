@@ -86,3 +86,54 @@ def render_sitemap_files(entries: dict, origin: str, prefix: str = "content") ->
         for name in shards
     ]
     return {"root_xml": _INDEX_START + "".join(index_rows) + _INDEX_END, "shards": shards}
+
+
+_GROUP_NAME = re.compile(r"[a-z][a-z0-9-]*")
+
+
+def _chunk_rows(entries: dict):
+    """Yield lists of XML rows, each list within the URL and byte limits."""
+    rows, byte_count = [], _URLSET_OVERHEAD
+    for path, row in sorted(entries.items()):
+        stamp = _lastmod(row)
+        lastmod = "<lastmod>" + escape(stamp) + "</lastmod>" if stamp else ""
+        xml_row = "<url><loc>" + escape(row.get("_origin", "") + path) + "</loc>" + lastmod + "</url>"
+        row_bytes = len(xml_row.encode("utf-8"))
+        if _URLSET_OVERHEAD + row_bytes > MAX_BYTES:
+            raise ValueError("A sitemap URL entry exceeds the UTF-8 byte limit")
+        if rows and (len(rows) >= MAX_URLS or byte_count + row_bytes > MAX_BYTES):
+            yield rows
+            rows, byte_count = [], _URLSET_OVERHEAD
+        rows.append((xml_row, stamp))
+        byte_count += row_bytes
+    if rows:
+        yield rows
+
+
+def render_grouped_sitemap_files(groups, origin: str) -> dict:
+    """A sitemap index whose children are named, meaningful groups.
+
+    `groups` is an ordered list of (name, entries) pairs. Each group becomes
+    `sitemaps/<name>.xml`, or `sitemaps/<name>-0001.xml`… when it exceeds the
+    per-file limits. Named groups let Search Console report indexing per group
+    (core pages, base places per service, additional places per service), so a
+    problem in one group is visible instead of being averaged over 40,000 URLs.
+    Each index entry carries the newest lastmod found in that child.
+    """
+    shards, index_rows = {}, []
+    for name, entries in groups:
+        if not isinstance(name, str) or not _GROUP_NAME.fullmatch(name):
+            raise ValueError("Sitemap group names must contain only lowercase letters, digits and hyphens")
+        if not entries:
+            continue
+        tagged = {path: {**row, "_origin": origin} for path, row in entries.items()}
+        chunks = list(_chunk_rows(tagged))
+        for number, rows in enumerate(chunks, start=1):
+            file_name = f"sitemaps/{name}.xml" if len(chunks) == 1 else f"sitemaps/{name}-{number:04d}.xml"
+            shards[file_name] = _URLSET_START + "".join(row for row, _ in rows) + _URLSET_END
+            newest = max((stamp for _, stamp in rows if stamp), default="")
+            index_rows.append("<sitemap><loc>" + escape(origin.rstrip("/") + "/" + file_name) + "</loc>" +
+                              ("<lastmod>" + escape(newest) + "</lastmod>" if newest else "") + "</sitemap>")
+    if not shards:
+        return {"root_xml": _URLSET_START + _URLSET_END, "shards": {}}
+    return {"root_xml": _INDEX_START + "".join(index_rows) + _INDEX_END, "shards": shards}

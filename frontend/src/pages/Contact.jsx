@@ -1,6 +1,7 @@
 import Seo from "@/components/Seo";
 import { MaskLines } from "@/components/Reveal";
 import ContactForm from "@/components/ContactForm";
+import GoogleReviews from "@/components/GoogleReviews";
 import { CONTACT, waLink, googleProfileUrl } from "@/data/site";
 import { MessageCircle, Mail, Clock, Star } from "lucide-react";
 
@@ -37,6 +38,10 @@ export default function Contact() {
               <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#4285F4]/10 text-[#4285F4]"><Star className="h-5 w-5 fill-[#FBBC05] text-[#FBBC05]" /></span>
               <span><span className="block font-semibold">Find us on Google</span><span className="text-sm text-muted-foreground">View our Google Business profile &amp; reviews</span></span>
             </a>
+          </div>
+
+          <div className="mt-6">
+            <GoogleReviews variant="compact" />
           </div>
         </div>
         <ContactForm />

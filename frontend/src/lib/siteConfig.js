@@ -4,13 +4,43 @@ import { analyticsId, cleanEventMeta, emitJourneyEvent, publicPageMeta, publicPa
 // first render correct even before the live /api/settings fetch resolves. Admin edits persist
 // server-side and hydrate the app at runtime via SettingsContext -> setSiteConfig().
 
+// The listing's own "Embed a map" code: shows the Google Business Profile card over Delhi NCR.
+export const GOOGLE_MAP_EMBED_URL =
+  "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d448557.6735738471!2d77.2005332!3d28.559045949999998" +
+  "!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x61cba1c16596fc7b%3A0x8f62eea1e41039e4" +
+  "!2sRajeev%20Freelancer%20-%20Website%20and%20App%20Development!5e0!3m2!1sen!2sin!4v1794202533313!5m2!1sen!2sin";
+
+// Verbatim copies of the reviews publicly visible on the Google listing (checked 2026-11-09).
+// Kept in sync with GOOGLE_REVIEWS_SNAPSHOT in backend/server.py. Ratings-only reviews have an empty text.
+export const GOOGLE_REVIEWS_SNAPSHOT = [
+  {
+    author: "SK Gupta",
+    rating: 5,
+    date: "2026-09",
+    text:
+      "Excellent work and highly recommended! I am very happy with the Bill Generation Software developed by Rajeev. He understood our requirements perfectly and delivered a smooth, user-friendly, and efficient billing solution.\n\nThe software has made our bill generation process much faster and easier, saving us valuable time and reducing manual work. Rajeev was professional, responsive, and committed throughout the project.\n\nThank you for the excellent work. I would definitely recommend Rajeev for software development projects.\n\n— Sanjay Gupta",
+  },
+  {
+    author: "Dheeraj Kumar",
+    rating: 5,
+    date: "2026-11",
+    text:
+      "I am Dheeraj, and I had the opportunity to receive online training from Rajeev Sir. The entire training experience was very good and informative. Rajeev Sir explained every topic clearly, with practical examples, making it easy to understand. His teaching style, knowledge, patience, and support made the learning experience smooth and effective.\n\nThank you, Rajeev Sir.",
+  },
+  { author: "intrinsicamerica", rating: 5, date: "2026-11", text: "Excellent work. thank you Rajeev" },
+  { author: "Nek Sathi", rating: 5, date: "2026-09", text: "He has done amazing work on Time - Thank you, Rajeev" },
+  { author: "Mohammad Asif", rating: 5, date: "2026-09", text: "Amazing website creator" },
+  { author: "Akhilesh kumar Sah", rating: 5, date: "2026-11", text: "" },
+  { author: "nstu india", rating: 5, date: "2026-09", text: "" },
+];
+
 export const SITE_DEFAULTS = {
   seo: {
     site_name: "Rajeev Freelancer",
     default_title: "Rajeev Freelancer — Senior Freelance Engineer & AI/Digital Marketing Consultant",
     default_description:
       "Hire Rajeev — a senior freelance engineer & AI/digital marketing consultant with 12+ years' experience. Web development, software, SEO, AI automation & WhatsApp marketing. Available worldwide.",
-    og_image: "https://customer-assets-gfyr7b9c.emergentagent.net/job_rajeev-seo-hub/artifacts/whqtfhxo_image.png",
+    og_image: "https://rajeevfreelancer.com/assets/brand/og-image.png",
     canonical_domain: "https://rajeevfreelancer.com",
     twitter_handle: "@rajeevfreelancer",
     robots_index: true,
@@ -27,18 +57,25 @@ export const SITE_DEFAULTS = {
   },
   social: { linkedin: "", twitter: "", github: "", instagram: "", youtube: "", facebook: "" },
   business: {
-    logo: "https://customer-assets-gfyr7b9c.emergentagent.net/job_rajeev-seo-hub/artifacts/whqtfhxo_image.png",
-    rating: "",
-    reviews_count: "",
-    reviews_verified: false,
+    logo: "https://rajeevfreelancer.com/assets/brand/rajeev-portrait.png",
+    // Checked against the public Google Business Profile listing on 2026-11-09.
+    rating: "5.0",
+    reviews_count: "13",
+    reviews_verified: true,
+    reviews_checked_on: "2026-11-09",
     testimonials_verified: false,
     founding_year: "2013",
     founder_name: "Rajeev Gits",
     address: "Gurgaon, Haryana, India",
-    google_maps_url: "",
+    google_maps_url: "https://maps.google.com/maps?cid=10332082874224753124",
     google_profile_url: "https://share.google/ddhGdf8R7JkjaWji3",
+    google_review_url: "https://g.page/r/CeQ5EOSh7mKPEBI/review",
+    google_place_cid: "10332082874224753124",
+    // Service-area business: no walk-in office, so no directions button.
     customer_facing_office_verified: false,
-    map_embed_url: "",
+    map_embed_url: GOOGLE_MAP_EMBED_URL,
+    show_map: true,
+    google_reviews: GOOGLE_REVIEWS_SNAPSHOT,
   },
   tracking: { ga4_id: "", ads_id: "", ads_conversion_label: "" },
   marketing: { offers_enabled: true, popup_enabled: true, offers_end_date: "" },

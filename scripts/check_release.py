@@ -232,6 +232,16 @@ def static_checks(checks, manifest, catalog, aliases, live_urls):
     origin = manifest.get("origin", "https://rajeevfreelancer.com")
     static_paths = {normalized_path(entry["path"]) for entry in entries}
     services = aliases.with_live_services(catalog.SERVICES)
+    # Country hubs now link to the world-expansion places as well as the base
+    # catalog cities; both are real FastAPI routes.
+    link_cities = dict(catalog.CITY_MAP)
+    expansion_places = read_json(ROOT / "frontend/src/seo/expansion-places.json", {})
+    for places in (expansion_places or {}).values():
+        for place in places or []:
+            if isinstance(place, dict) and place.get("loc_slug"):
+                link_cities.setdefault(place["loc_slug"], place)
+    if not expansion_places:
+        checks.warning("expansion-catalog-unavailable", "", "frontend/src/seo/expansion-places.json missing; run frontend/scripts/export-catalog.py")
     editorial_paths = {normalized_path(url) for url in live_urls if normalized_path(url).startswith(("/blog/", "/case-studies/"))}
     projects = portfolio_source(checks)
     editorial_paths.update({"/work", *("/work/" + project["slug"] for project in projects)})
@@ -275,7 +285,7 @@ def static_checks(checks, manifest, catalog, aliases, live_urls):
             target = normalized_path(absolute.path)
             checks.counts["internal_link_occurrences"] += 1
             checks.checked_links.add(target)
-            if not route_supported(target, static_paths, services, catalog.CITY_MAP, editorial_paths):
+            if not route_supported(target, static_paths, services, link_cities, editorial_paths):
                 checks.error("unresolved-internal-link", path, target)
     for title, canonicals in title_groups.items():
         if len(canonicals) > 1: checks.warning("shared-static-title", "", {"title": title, "canonicals": sorted(canonicals)})

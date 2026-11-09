@@ -1,3 +1,9 @@
+# Latest: release 2026-11-09 (favicon, indexing layer for the location pages, Google profile on the site)
+
+Read `docs/INDEXING-FAVICON-RELEASE-20261109.md` first. It lists the new files, the nginx changes (www → non-www,
+favicon/asset caching), the acceptance `curl` checks and the Search Console steps. Existing URLs, titles,
+descriptions and stored bodies are unchanged; no database migration.
+
 # Latest Work CMS update
 
 The current package also includes the redesigned homepage, industry/service-filtered Work collection, real project previews and Admin Work/Case Study submission forms. See `docs/WORK-CMS.md` and `docs/WORK-RELEASE-VERIFICATION.json`. Deploy **both** backend and built frontend; keep the existing MongoDB, environment, uploads and admin account. The new `portfolio_projects` collection is created/indexed without rewriting existing pages. Later Admin publications require no rebuild.

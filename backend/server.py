@@ -167,8 +167,26 @@ async def get_services():
     return {"services": LIVE_SERVICES}
 
 
-@api_router.get("/locations")
-async def get_locations():
+def _more_places_by_country() -> dict:
+    """Additional catalog places per country, largest first, for hub-page links.
+
+    Country hubs previously linked only the 471 base places, so the published
+    expansion pages were reachable only through the sitemap. Listing them here
+    gives every page a crawl path: home → locations → country → page.
+    """
+    try:
+        from world_expansion import catalog
+        additional = catalog()["additional"].values()
+    except Exception:  # catalog problems must never break the locations API
+        return {}
+    grouped = {}
+    for row in sorted(additional, key=lambda r: (-(r.get("population") or 0), str(r.get("city", "")))):
+        grouped.setdefault(row["country_slug"], []).append({"city": row["city"], "loc_slug": row["loc_slug"]})
+    return grouped
+
+
+def _country_rows() -> list:
+    more = _more_places_by_country()
     countries = []
     for slug, c in COUNTRIES.items():
         countries.append({
@@ -177,8 +195,14 @@ async def get_locations():
             "name": c["name"],
             "region": c["region"],
             "cities": [{"city": city, "loc_slug": f"{_slug(city)}-{slug}"} for city in c["cities"]],
+            "more_places": more.get(slug, []),
         })
-    return {"countries": countries, "total_cities": len(CITY_MAP)}
+    return countries
+
+
+@api_router.get("/locations")
+async def get_locations():
+    return {"countries": _country_rows(), "total_cities": len(CITY_MAP)}
 
 
 @api_router.get("/service/{service_slug}")
@@ -186,19 +210,7 @@ async def get_service_hub(service_slug: str):
     service = SERVICE_MAP.get(service_slug)
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
-    featured = []
-    for loc_slug, loc in list(CITY_MAP.items())[:60]:
-        featured.append({**loc})
-    countries = []
-    for slug, c in COUNTRIES.items():
-        countries.append({
-            **{key: value for key, value in c.items() if key != "cities"},
-            "slug": slug,
-            "name": c["name"],
-            "region": c["region"],
-            "cities": [{"city": city, "loc_slug": f"{_slug(city)}-{slug}"} for city in c["cities"]],
-        })
-    return {"service": service, "countries": countries}
+    return {"service": service, "countries": _country_rows()}
 
 
 def _slug(text: str) -> str:
@@ -353,8 +365,23 @@ def _page_doc(service: dict, loc: dict, cache_key: str, content: dict, ai_used: 
     }
 
 
+def _with_local_facts(payload: dict, service_slug: str, loc_slug: str) -> dict:
+    """Attach the same place facts the server-rendered HTML shows (never persisted)."""
+    from location_facts import local_facts
+    canonical = str(payload.get("canonical") or f"/{service_slug}/{loc_slug}")
+    parts = canonical.strip("/").split("/")
+    facts = local_facts(parts[0] if parts else service_slug, str((payload.get("location") or {}).get("loc_slug") or loc_slug), path=canonical)
+    if facts:
+        payload = {**payload, "local_facts": facts}
+    return payload
+
+
 @api_router.get("/page/{service_slug}/{loc_slug}")
 async def get_location_page(service_slug: str, loc_slug: str):
+    return _with_local_facts(await _location_page_document(service_slug, loc_slug), service_slug, loc_slug)
+
+
+async def _location_page_document(service_slug: str, loc_slug: str):
     service = SERVICE_MAP.get(service_slug)
     requested_path = f"/{service_slug}/{loc_slug}"
     loc = location_for_path(CITY_MAP, loc_slug, requested_path)
@@ -771,12 +798,13 @@ async def get_digest_settings(admin: dict = Depends(get_current_admin)):
 
 
 # ---------------- Site settings (SEO / contact / social / business) ----------------
+from google_profile import GOOGLE_MAP_EMBED_URL, GOOGLE_REVIEWS_SNAPSHOT, google_profile_business
 DEFAULT_SITE = {
     "seo": {
         "site_name": "Rajeev Freelancer",
         "default_title": "Rajeev Freelancer — Senior Freelance Engineer & AI/Digital Marketing Consultant",
         "default_description": "Hire Rajeev — a senior freelance engineer & AI/digital marketing consultant with 12+ years' experience. Web development, software, SEO, AI automation & WhatsApp marketing. Available worldwide.",
-        "og_image": "https://customer-assets-gfyr7b9c.emergentagent.net/job_rajeev-seo-hub/artifacts/whqtfhxo_image.png",
+        "og_image": "https://rajeevfreelancer.com/assets/brand/og-image.png",
         "canonical_domain": "https://rajeevfreelancer.com",
         "twitter_handle": "@rajeevfreelancer",
         "robots_index": True,
@@ -793,17 +821,25 @@ DEFAULT_SITE = {
     },
     "social": {"linkedin": "", "twitter": "", "github": "", "instagram": "", "youtube": "", "facebook": ""},
     "business": {
-        "logo": "https://customer-assets-gfyr7b9c.emergentagent.net/job_rajeev-seo-hub/artifacts/whqtfhxo_image.png",
-        "rating": "4.9",
-        "reviews_verified": False,
+        "logo": "https://rajeevfreelancer.com/assets/brand/rajeev-portrait.png",
+        # Checked against the public Google Business Profile listing on 2026-11-09
+        # (Maps CID 10332082874224753124): 5.0 stars from 13 reviews.
+        "rating": "5.0",
+        "reviews_count": "13",
+        "reviews_verified": True,
+        "reviews_checked_on": "2026-11-09",
         "google_profile_url": "https://share.google/ddhGdf8R7JkjaWji3",
+        "google_review_url": "https://g.page/r/CeQ5EOSh7mKPEBI/review",
+        "google_place_cid": "10332082874224753124",
+        # Service-area business: no walk-in office, so no "Get directions" button.
         "customer_facing_office_verified": False,
-        "reviews_count": "96",
         "founding_year": "2013",
         "founder_name": "Rajeev Gits",
         "address": "Gurgaon, Haryana, India",
-        "google_maps_url": "https://www.google.com/maps/place/Gurgaon,+Haryana",
-        "map_embed_url": "https://www.google.com/maps?q=Gurgaon,Haryana,India&output=embed",
+        "google_maps_url": "https://maps.google.com/maps?cid=10332082874224753124",
+        "show_map": True,
+        # map_embed_url and google_reviews are attached below (release tooling
+        # parses this dict as a literal).
     },
     "tracking": {"ga4_id": "", "ads_id": "", "ads_conversion_label": ""},
     "notifications": {
@@ -818,6 +854,10 @@ DEFAULT_SITE = {
         "offers_end_date": "",
     },
 }
+# The listing's own "Embed a map" code (shows the profile card over Delhi NCR)
+# and the public reviews copied verbatim from it (see google_profile.py).
+DEFAULT_SITE["business"]["map_embed_url"] = GOOGLE_MAP_EMBED_URL
+DEFAULT_SITE["business"]["google_reviews"] = GOOGLE_REVIEWS_SNAPSHOT
 
 
 def _deep_merge(base: dict, override: dict) -> dict:
@@ -830,11 +870,30 @@ def _deep_merge(base: dict, override: dict) -> dict:
     return out
 
 
+_LEGACY_IMAGE_HOSTS = ("customer-assets-gfyr7b9c.emergentagent.net",)
+
+
+def _brand_image(value, fallback: str) -> str:
+    """Stored settings may still point at the retired build-host image URL.
+
+    Those images are not served from the site's own domain, which is one reason
+    Google showed a generic globe instead of the site favicon. Map them to the
+    bundled brand assets; any other explicitly configured image is kept.
+    """
+    text = str(value or "").strip()
+    if not text or any(host in text for host in _LEGACY_IMAGE_HOSTS):
+        return fallback
+    return text
+
+
 async def _get_site_settings() -> dict:
     doc = await db.settings.find_one({"key": "site"}, {"_id": 0, "key": 0})
     merged = _deep_merge(DEFAULT_SITE, doc or {})
     from public_seo import canonical_origin
     merged["seo"]["canonical_domain"] = canonical_origin(merged)
+    merged["seo"]["og_image"] = _brand_image(merged["seo"].get("og_image"), DEFAULT_SITE["seo"]["og_image"])
+    merged["business"]["logo"] = _brand_image(merged["business"].get("logo"), DEFAULT_SITE["business"]["logo"])
+    merged["business"] = google_profile_business(merged["business"], DEFAULT_SITE["business"])
     return merged
 
 
@@ -911,6 +970,29 @@ async def _legacy_indexnow_config():
 
 indexnow_service = IndexNowService(db=db, validator=_validate_indexnow_path,
     config=IndexNowConfig.from_env(), config_loader=_legacy_indexnow_config)
+
+
+_CANONICAL_HOST = "rajeevfreelancer.com"
+_ALTERNATE_HOSTS = {"www." + _CANONICAL_HOST}
+
+
+@app.middleware("http")
+async def _canonical_host_middleware(request: Request, call_next):
+    """Serve every public URL from one host only.
+
+    Search Console reported https://www.rajeevfreelancer.com/... pages as
+    duplicates: the www host answered with full copies instead of redirecting.
+    A permanent redirect keeps the path and query string, so no indexed URL
+    changes; only the host is normalised. Only the known alternate host is
+    redirected, so local, health-check and proxy hostnames are unaffected.
+    """
+    host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "").split(",")[0].strip().lower()
+    hostname = host.split(":", 1)[0]
+    if hostname in _ALTERNATE_HOSTS and request.method in {"GET", "HEAD"}:
+        from fastapi.responses import RedirectResponse
+        target = "https://" + _CANONICAL_HOST + request.url.path + ("?" + request.url.query if request.url.query else "")
+        return RedirectResponse(target, status_code=301, headers={"Cache-Control": "public, max-age=86400"})
+    return await call_next(request)
 
 
 @app.middleware("http")

@@ -1,8 +1,8 @@
 {
-  "checked_at": "2026-10-25T18:51:01.592062+00:00",
+  "checked_at": "2026-11-09T05:46:11.754342+00:00",
   "mode": "static-only",
   "result": "pass",
-  "build_generated_at": "2026-10-25T18:49:29.977Z",
+  "build_generated_at": "2026-11-09T05:44:17.903Z",
   "canonical_origin": "https://rajeevfreelancer.com",
   "counts": {
     "original_seo_declarations_checked": 18,
@@ -10,9 +10,9 @@
     "portfolio_source_projects": 36,
     "static_html_pages_checked": 280,
     "captured_live_static_metadata_snapshots_checked": 19,
-    "internal_link_occurrences": 26556,
+    "internal_link_occurrences": 62796,
     "preserved_locale_pages_checked": 4,
-    "unique_internal_link_targets": 5532,
+    "unique_internal_link_targets": 41772,
     "static_sitemap_urls_checked": 272
   },
   "html_languages": {

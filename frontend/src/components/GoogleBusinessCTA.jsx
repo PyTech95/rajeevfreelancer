@@ -8,8 +8,11 @@ export const GoogleBusinessCTA = ({ label = "Delhi NCR" }) => {
   const biz = s?.business || {};
   const rating = biz.reviews_verified ? biz.rating : null;
   const reviews = biz.reviews_verified ? biz.reviews_count : null;
+  // Directions only make sense for a staffed office; the listing map itself is fine for a service-area business.
   const mapsUrl = biz.customer_facing_office_verified ? biz.google_maps_url : null;
-  const embed = biz.customer_facing_office_verified ? biz.map_embed_url : null;
+  const embed = biz.show_map !== false ? biz.map_embed_url : null;
+  const writeUrl = biz.google_review_url || googleProfileUrl();
+  const readUrl = biz.google_maps_url || googleProfileUrl();
 
   return (
     <section className="bg-white border-y border-line" data-testid="google-business-cta">
@@ -28,8 +31,11 @@ export const GoogleBusinessCTA = ({ label = "Delhi NCR" }) => {
             Serving {label} and beyond. See our Google Business Profile for reviews, directions and to get in touch quickly.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href={googleProfileUrl()} target="_blank" rel="noopener noreferrer" data-testid="gbp-reviews-btn" className="inline-flex items-center gap-2 rounded-full bg-brand px-7 py-3.5 font-medium text-white hover:bg-ink transition-colors duration-300">
-              <Star className="h-4 w-4" /> Read &amp; write reviews <ArrowUpRight className="h-4 w-4" />
+            <a href={readUrl} target="_blank" rel="noopener noreferrer" data-testid="gbp-reviews-btn" className="inline-flex items-center gap-2 rounded-full bg-brand px-7 py-3.5 font-medium text-white hover:bg-ink transition-colors duration-300">
+              <Star className="h-4 w-4" /> Read reviews on Google <ArrowUpRight className="h-4 w-4" />
+            </a>
+            <a href={writeUrl} target="_blank" rel="noopener noreferrer" data-testid="gbp-write-review-btn" className="inline-flex items-center gap-2 rounded-full border border-ink/20 px-7 py-3.5 font-medium hover:border-ink transition-colors duration-300">
+              Write a review
             </a>
             {mapsUrl && <a href={mapsUrl} target="_blank" rel="noopener noreferrer" data-testid="gbp-directions-btn" className="inline-flex items-center gap-2 rounded-full border border-ink/20 px-7 py-3.5 font-medium hover:border-ink transition-colors duration-300">
               <Navigation className="h-4 w-4" /> Get directions

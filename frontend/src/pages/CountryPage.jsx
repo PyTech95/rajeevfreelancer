@@ -8,22 +8,35 @@ import { Reveal, MaskLines } from "@/components/Reveal";
 import NotFound from "@/pages/NotFound";
 import { api } from "@/lib/api";
 import { SERVICES, waLink } from "@/data/site";
+import { LIVE_SERVICES } from "@/seo/serviceAliases";
+import { bootstrapData } from "@/seo/bootstrap";
+
+// Additional (world-expansion) places use the live service URL spelling.
+const liveServiceSlug = (slug) => LIVE_SERVICES.find((alias) => alias.primarySlug === slug)?.slug || slug;
+
+function bootstrappedPlaces(countrySlug) {
+  const payload = bootstrapData("countryPlaces");
+  return payload && payload.slug === countrySlug && Array.isArray(payload.places) ? payload.places : null;
+}
 
 export default function CountryPage() {
   const { countrySlug } = useParams();
   const [country, setCountry] = useState(() => CATALOG.countries.find((c) => c.slug === countrySlug));
   const [error, setError] = useState(() => !CATALOG.countries.some((c) => c.slug === countrySlug));
+  // Server HTML and first client render carry the same list, so hydration matches.
+  const [morePlaces, setMorePlaces] = useState(() => bootstrappedPlaces(countrySlug));
 
   useEffect(() => {
     window.scrollTo(0, 0);
     const bundled = CATALOG.countries.find((c) => c.slug === countrySlug);
     setCountry(bundled);
     setError(!bundled);
+    setMorePlaces(bootstrappedPlaces(countrySlug));
     let active = true;
     api.get("/locations").then(({ data }) => {
       if (!active) return;
       const c = data.countries.find((x) => x.slug === countrySlug);
-      if (c) { setCountry(c); setError(false); }
+      if (c) { setCountry(c); setError(false); if (Array.isArray(c.more_places)) setMorePlaces(c.more_places); }
     }).catch(() => {});
     return () => { active = false; };
   }, [countrySlug]);
@@ -68,6 +81,16 @@ export default function CountryPage() {
                   <Link key={city.loc_slug} to={`/${s.slug}/${city.loc_slug}`} className="text-sm text-ink/65 hover:text-brand link-underline">{city.city}</Link>
                 ))}
               </div>
+              {morePlaces && morePlaces.length > 0 && (
+                <div className="mt-4" data-testid={`more-places-${s.slug}`}>
+                  <p className="text-xs uppercase tracking-wider text-ink/45">More places in {country.name}</p>
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
+                    {morePlaces.map((place) => (
+                      <Link key={place.loc_slug} to={`/${liveServiceSlug(s.slug)}/${place.loc_slug}`} className="text-sm text-ink/55 hover:text-brand link-underline">{place.city}</Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </Reveal>
         ))}

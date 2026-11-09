@@ -41,11 +41,11 @@ export default function LangLanding({ lang: propLang }) {
         <meta property="og:title" content={t.seo_title} />
         <meta property="og:description" content={t.seo_desc} />
         <meta property="og:locale" content={lang} />
-        <meta property="og:image" content="https://customer-assets-gfyr7b9c.emergentagent.net/job_rajeev-seo-hub/artifacts/whqtfhxo_image.png" />
+        <meta property="og:image" content="https://rajeevfreelancer.com/assets/brand/og-image.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={t.seo_title} />
         <meta name="twitter:description" content={t.seo_desc} />
-        <meta name="twitter:image" content="https://customer-assets-gfyr7b9c.emergentagent.net/job_rajeev-seo-hub/artifacts/whqtfhxo_image.png" />
+        <meta name="twitter:image" content="https://rajeevfreelancer.com/assets/brand/og-image.png" />
       </Helmet>
 
       {/* Simple localized top bar */}

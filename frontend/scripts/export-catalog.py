@@ -12,6 +12,16 @@ target = root / 'frontend/src/seo/catalog.json'
 target.write_text(json.dumps({"countries": countries, "total_cities": len(data['CITY_MAP'])}, ensure_ascii=False, indent=2) + '\n')
 print(f"Catalog: {len(countries)} countries, {len(data['CITY_MAP'])} cities")
 
+# Additional (world-expansion) places per country, largest first. Imported ONLY by the
+# server-side prerender so country hub pages link to every published place without
+# adding the whole catalog to the browser bundle; the API returns the same list live.
+expansion = json.loads((root / 'backend/world-expansion-catalog.json').read_text(encoding='utf-8'))
+more_places = {}
+for row in sorted(expansion.get('locations', []), key=lambda r: (-(r.get('population') or 0), r.get('city', ''))):
+    more_places.setdefault(row['country_slug'], []).append({"city": row['city'], "loc_slug": row['loc_slug']})
+(root / 'frontend/src/seo/expansion-places.json').write_text(json.dumps(more_places, ensure_ascii=False, separators=(',', ':')) + '\n')
+print(f"Expansion places: {sum(len(v) for v in more_places.values())} places in {len(more_places)} countries")
+
 # The backend and browser must select the same evidence-backed canonical paths.
 canonical_source = root / 'backend/canonical-path-map.json'
 canonical_target = root / 'frontend/src/seo/canonical-path-map.json'

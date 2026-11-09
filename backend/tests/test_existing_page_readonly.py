@@ -152,7 +152,9 @@ def env(monkeypatch):
              "location_for_path": lambda city_map, slug, path: city_map.get(slug),
              "apply_index_policy": lambda doc, path: doc, "_page_content": fallback,
              "_fallback_content": fallback, "_warmup": Counter(), "_warmup_new_paths": []}
-    extract(BACKEND / "server.py", {"_page_doc", "get_location_page", "_generate_and_cache", "_warm_one"}, scope)
+    # get_location_page now wraps the stored document with derived, non-persisted
+    # place facts; the stored record itself stays read-only.
+    extract(BACKEND / "server.py", {"_page_doc", "get_location_page", "_location_page_document", "_with_local_facts", "_generate_and_cache", "_warm_one"}, scope)
     actual_background = scope["_generate_and_cache"]
     scope["_generate_and_cache"] = background
 

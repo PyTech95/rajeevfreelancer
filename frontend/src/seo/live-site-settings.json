@@ -3,7 +3,7 @@
     "site_name": "Rajeev Freelancer",
     "default_title": "App Developer, Website Development & SEO Marketing Consultant | Rajeev",
     "default_description": "Hire Rajeev — app developer, website development & SEO marketing consultant in Delhi NCR. 12+ years turning apps, SEO & AI automation into revenue. Free quote.",
-    "og_image": "https://customer-assets-gfyr7b9c.emergentagent.net/job_rajeev-app/artifacts/0zkv66rh_image.png",
+    "og_image": "https://rajeevfreelancer.com/assets/brand/og-image.png",
     "canonical_domain": "https://rajeevfreelancer.com",
     "twitter_handle": "@rajeevfreelancer",
     "robots_index": true,
@@ -31,17 +31,65 @@
     "facebook": ""
   },
   "business": {
-    "logo": "https://customer-assets-gfyr7b9c.emergentagent.net/job_rajeev-app/artifacts/0zkv66rh_image.png",
-    "rating": "4.9",
-    "reviews_count": "96",
+    "logo": "https://rajeevfreelancer.com/assets/brand/rajeev-portrait.png",
+    "rating": "5.0",
+    "reviews_count": "13",
     "founding_year": "2013",
     "founder_name": "Rajeev ",
     "address": "Gurgaon, Haryana, India",
-    "google_maps_url": "https://www.google.com/maps/place/Gurgaon,+Haryana",
-    "map_embed_url": "https://www.google.com/maps?q=Gurgaon,Haryana,India&output=embed",
-    "reviews_verified": false,
+    "google_maps_url": "https://maps.google.com/maps?cid=10332082874224753124",
+    "map_embed_url": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d448557.6735738471!2d77.2005332!3d28.559045949999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x61cba1c16596fc7b%3A0x8f62eea1e41039e4!2sRajeev%20Freelancer%20-%20Website%20and%20App%20Development!5e0!3m2!1sen!2sin!4v1794202533313!5m2!1sen!2sin",
+    "reviews_verified": true,
     "testimonials_verified": false,
-    "customer_facing_office_verified": false
+    "customer_facing_office_verified": false,
+    "reviews_checked_on": "2026-11-09",
+    "google_review_url": "https://g.page/r/CeQ5EOSh7mKPEBI/review",
+    "google_place_cid": "10332082874224753124",
+    "show_map": true,
+    "google_reviews": [
+      {
+        "author": "SK Gupta",
+        "rating": 5,
+        "date": "2026-09",
+        "text": "Excellent work and highly recommended! I am very happy with the Bill Generation Software developed by Rajeev. He understood our requirements perfectly and delivered a smooth, user-friendly, and efficient billing solution.\n\nThe software has made our bill generation process much faster and easier, saving us valuable time and reducing manual work. Rajeev was professional, responsive, and committed throughout the project.\n\nThank you for the excellent work. I would definitely recommend Rajeev for software development projects.\n\n— Sanjay Gupta"
+      },
+      {
+        "author": "Dheeraj Kumar",
+        "rating": 5,
+        "date": "2026-11",
+        "text": "I am Dheeraj, and I had the opportunity to receive online training from Rajeev Sir. The entire training experience was very good and informative. Rajeev Sir explained every topic clearly, with practical examples, making it easy to understand. His teaching style, knowledge, patience, and support made the learning experience smooth and effective.\n\nThank you, Rajeev Sir."
+      },
+      {
+        "author": "intrinsicamerica",
+        "rating": 5,
+        "date": "2026-11",
+        "text": "Excellent work. thank you Rajeev"
+      },
+      {
+        "author": "Nek Sathi",
+        "rating": 5,
+        "date": "2026-09",
+        "text": "He has done amazing work on Time - Thank you, Rajeev"
+      },
+      {
+        "author": "Mohammad Asif",
+        "rating": 5,
+        "date": "2026-09",
+        "text": "Amazing website creator"
+      },
+      {
+        "author": "Akhilesh kumar Sah",
+        "rating": 5,
+        "date": "2026-11",
+        "text": ""
+      },
+      {
+        "author": "nstu india",
+        "rating": 5,
+        "date": "2026-09",
+        "text": ""
+      }
+    ]
   },
   "tracking": {
     "ga4_id": "G-H22CVV0R10",

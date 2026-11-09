@@ -10,6 +10,7 @@ import { SERVICES } from '../data/site';
 import CATALOG from '../seo/catalog.json';
 import LIVE_SETTINGS from '../seo/live-site-settings.json';
 import HOME_PORTFOLIO from '../seo/home-portfolio.json';
+import EXPANSION_PLACES from '../seo/expansion-places.json';
 import { LIVE_SERVICES } from '../seo/serviceAliases';
 
 export { SERVICES, CATALOG, SITE_DEFAULTS };
@@ -25,7 +26,12 @@ export function routes() {
 }
 export function render(path, settings = LIVE_SETTINGS) {
   const mergedSettings = setSiteConfig(settings);
-  globalThis.__RF_BOOTSTRAP__ = {path,settings:mergedSettings,data:{locations:CATALOG, ...(path === '/' ? {homePortfolio:HOME_PORTFOLIO} : {}), ...(path === '/work' ? {portfolio:HOME_PORTFOLIO} : {})},renderedBy:'react'};
+  // Country hubs also list the additional (world-expansion) places, so every
+  // published service/location page is reachable by links. Only that country's
+  // list is embedded in its page; the browser bundle never carries the catalog.
+  const countryMatch = path.match(/^\/locations\/([a-z0-9-]+)$/);
+  const countryPlaces = countryMatch ? {slug: countryMatch[1], places: EXPANSION_PLACES[countryMatch[1]] || []} : null;
+  globalThis.__RF_BOOTSTRAP__ = {path,settings:mergedSettings,data:{locations:CATALOG, ...(countryPlaces ? {countryPlaces} : {}), ...(path === '/' ? {homePortfolio:HOME_PORTFOLIO} : {}), ...(path === '/work' ? {portfolio:HOME_PORTFOLIO} : {})},renderedBy:'react'};
   const helmetContext = {};
   const queryClient = new QueryClient({defaultOptions:{queries:{retry:false}}});
   let html = renderToString(
