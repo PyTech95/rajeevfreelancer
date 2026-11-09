@@ -162,7 +162,7 @@ Spot-check in a browser: home page (reviews block + footer map), `/contact` (com
 python3 scripts/indexnow_submit_sitemaps.py --dry-run   # counts the URLs in the live sitemap index
 python3 scripts/indexnow_submit_sitemaps.py             # submits all ~40k URLs to IndexNow in 10,000-URL batches
 ```
-Uses the key the app already serves at `/api/indexnow-key` (or `INDEXNOW_KEY`). Expect `HTTP 200/202 accepted`
+Uses the key the app serves at `/<key>.txt` (read via `/api/indexnow-key` or `INDEXNOW_KEY`). Expect `HTTP 200/202 accepted`
 per batch. This feeds Bing, DuckDuckGo, Yahoo, Copilot/ChatGPT search, Yandex, Naver and Seznam; Google ignores
 IndexNow and uses the sitemap index instead.
 

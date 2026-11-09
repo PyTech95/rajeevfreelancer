@@ -9,9 +9,13 @@ adds or changes many pages:
     python3 scripts/indexnow_submit_sitemaps.py --only places-base   # one sitemap group
 
 The IndexNow key is read from the INDEXNOW_KEY environment variable, else from
-backend/.env, else fetched from https://rajeevfreelancer.com/api/indexnow-key
-(the key file the app already serves). Google does not use IndexNow; for Google
-the sitemap index in Search Console is the channel. Standard library only.
+backend/.env, else fetched from https://rajeevfreelancer.com/api/indexnow-key.
+The key file that IndexNow verifies is https://rajeevfreelancer.com/<key>.txt
+(served by the app); it MUST be at the site root, because a key file only
+authorises URLs at or below its own directory (that is why /api/indexnow-key
+cannot be used as keyLocation — IndexNow answers 422 for every page).
+Google does not use IndexNow; for Google the sitemap index in Search Console is
+the channel. Standard library only.
 """
 from __future__ import annotations
 
@@ -28,7 +32,7 @@ from xml.etree import ElementTree as ET
 ORIGIN = "https://rajeevfreelancer.com"
 HOST = "rajeevfreelancer.com"
 ENDPOINT = "https://api.indexnow.org/indexnow"
-KEY_LOCATION = ORIGIN + "/api/indexnow-key"
+KEY_FETCH_URL = ORIGIN + "/api/indexnow-key"  # where the app exposes the key (read-only helper)
 BATCH = 10_000  # IndexNow maximum per POST
 NS = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 UA = "rajeevfreelancer-indexnow/1.0 (+https://rajeevfreelancer.com)"
@@ -48,7 +52,7 @@ def load_key() -> str:
             match = re.search(r"^INDEXNOW_KEY=([A-Za-z0-9-]+)", env_file.read_text(), re.M)
             key = match.group(1) if match else ""
     if not key:
-        key = fetch(KEY_LOCATION).decode().strip()
+        key = fetch(KEY_FETCH_URL).decode().strip()
     if not re.fullmatch(r"[A-Za-z0-9-]{8,128}", key):
         sys.exit("No valid IndexNow key found (env INDEXNOW_KEY, backend/.env or /api/indexnow-key).")
     return key
@@ -71,8 +75,12 @@ def sitemap_urls(index_url: str, only: str | None) -> dict[str, list[str]]:
     return groups
 
 
+def key_location(key: str) -> str:
+    return f"{ORIGIN}/{key}.txt"
+
+
 def submit(urls: list[str], key: str) -> tuple[int, str]:
-    body = json.dumps({"host": HOST, "key": key, "keyLocation": KEY_LOCATION, "urlList": urls}).encode()
+    body = json.dumps({"host": HOST, "key": key, "keyLocation": key_location(key), "urlList": urls}).encode()
     req = urllib.request.Request(ENDPOINT, data=body, method="POST",
                                  headers={"Content-Type": "application/json; charset=utf-8", "User-Agent": UA})
     try:
@@ -103,6 +111,9 @@ def main() -> int:
         return 0
 
     key = load_key()
+    served = fetch(key_location(key)).decode().strip()
+    if served != key:
+        sys.exit(f"{key_location(key)} does not serve the key; IndexNow would reject every URL (422).")
     ok = 0
     for start in range(0, len(all_urls), BATCH):
         chunk = all_urls[start:start + BATCH]
